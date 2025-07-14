@@ -1,0 +1,42 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --skip-name-resolve
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_USER}", "-p${MYSQL_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.0
+    container_name: keycloak-server
+    restart: always
+    ports:
+      - "8081:8080"
+    environment:
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://mysql-db:3306/${MYSQL_DATABASE}
+      KC_DB_USERNAME: ${MYSQL_USER}
+      KC_DB_PASSWORD: ${MYSQL_PASSWORD}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    command: start-dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

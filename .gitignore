@@ -4,7 +4,7 @@
 .settings
 .project
 .classpath
-
+.env
 *.iml
 .DS_Store
 
