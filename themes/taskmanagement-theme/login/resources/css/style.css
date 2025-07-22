@@ -1,0 +1,334 @@
+/* Reset and base styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #f7fafc;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+body > div:first-child {
+    width: 100%;
+}
+header{
+    display: none;
+}
+
+#kc-content-wrapper{
+    width: 100%;
+}
+#kc-content{
+    width: 100%;
+}
+#kc-form {
+    width: 100%;
+    max-width: 1200px;
+    margin: 3rem 5rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    min-height: 600px;
+}
+
+.login-container {
+    background: #F4F7FA;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 600px;
+}
+
+/* Left side - Illustration */
+.login-illustration {
+    background: #F4F7FA;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+.login-illustration > img{
+    width: 400px;
+}
+
+
+/* Right side - Login Form */
+.login-form-section {
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    padding: 3rem;
+    margin: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-header {
+    padding: 0 1rem 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.logo-text {
+    width: 200px;
+}
+.logo-img {
+    width: 80px;
+}
+.login-header > div:first-child {
+    align-items: flex-start;
+}
+
+
+/* Form styles */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #2d3748;
+    font-size: 0.875rem;
+}
+
+.form-input {
+    padding: 0.875rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background: #f7fafc;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #4299e1;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+/* Container pour le champ password avec bouton intégré */
+.password-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Input password avec padding à droite pour le bouton */
+.password-input-container .form-input {
+    padding-right: 3rem; /* Espace pour le bouton */
+    padding-left: 1rem;
+    padding-top: 0.875rem;
+    padding-bottom: 0.875rem;
+    width: 100%;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background: #f7fafc;
+}
+
+.password-input-container .form-input:focus {
+    outline: none;
+    border-color: #4299e1;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+/* Bouton toggle positionné absolument dans l'input */
+.password-toggle {
+    position: absolute;
+    right: 0.75rem; /* Distance du bord droit */
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: #718096;
+    padding: 0.25rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.password-toggle:hover {
+    background: rgba(113, 128, 150, 0.1);
+    color: #4a5568;
+}
+
+.password-toggle:focus {
+    outline: 2px solid #4299e1;
+    outline-offset: 1px;
+}
+
+/* Icône œil */
+#eye-icon {
+    font-size: 1rem;
+    line-height: 1;
+    user-select: none;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0.5rem 0;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #4a5568;
+}
+
+.checkbox-container input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #cbd5e0;
+    border-radius: 3px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.checkbox-container input[type="checkbox"]:checked + .checkmark {
+    background-color: #4299e1;
+    border-color: #4299e1;
+}
+
+.checkbox-container input[type="checkbox"]:checked + .checkmark:after {
+    content: "✓";
+    position: absolute;
+    color: white;
+    font-size: 12px;
+    top: -2px;
+    left: 2px;
+}
+
+.forgot-password {
+    color: #e53e3e;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+.login-button {
+    background: #2d3748;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 0.5rem;
+}
+
+.login-button:hover {
+    background: #1a202c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(45, 55, 72, 0.3);
+}
+
+.login-button:active {
+    transform: translateY(0);
+}
+
+.register-link {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #718096;
+}
+
+.register-link a {
+    color: #e53e3e;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
+}
+
+.error-message {
+    color: #e53e3e;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .login-container {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+
+    .login-illustration {
+        display: none;
+    }
+
+    .login-form-section {
+        padding: 2rem 1.5rem;
+    }
+
+    #kc-form {
+        margin: 1rem;
+        min-height: auto;
+    }
+}
+
+/* Hide default Keycloak elements */
+#kc-header,
+#kc-header-wrapper,
+.login-pf-page .login-pf-brand {
+    display: none !important;
+}
+
+.login-pf-page {
+    background: #f7fafc;
+}
+
+.card-pf {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}

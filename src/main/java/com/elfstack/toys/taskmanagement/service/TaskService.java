@@ -1,5 +1,6 @@
 package com.elfstack.toys.taskmanagement.service;
 
+import com.elfstack.toys.taskmanagement.domain.StatutEnum;
 import com.elfstack.toys.taskmanagement.domain.Task;
 import com.elfstack.toys.taskmanagement.domain.TaskRepository;
 import org.jspecify.annotations.Nullable;
@@ -17,7 +18,6 @@ import java.util.List;
 public class TaskService {
 
     private final TaskRepository taskRepository;
-
     private final Clock clock;
 
     TaskService(TaskRepository taskRepository, Clock clock) {
@@ -26,14 +26,23 @@ public class TaskService {
     }
 
     @Transactional
-    public void createTask(String description, @Nullable LocalDate dueDate) {
+    public void createTask(String libelle, String description, @Nullable LocalDate dateLimite,
+                           @Nullable String responsableId,  @Nullable LocalDate dateFin, String responsableFirstName, String responsableLastName, StatutEnum statut ) {
         if ("fail".equals(description)) {
             throw new RuntimeException("This is for testing the error handler");
         }
+
         var task = new Task();
+        task.setLibelle(libelle);
         task.setDescription(description);
         task.setCreationDate(clock.instant());
-        task.setDueDate(dueDate);
+        task.setResponsableFirstName(responsableFirstName);
+        task.setResponsableLastName(responsableLastName);
+        task.setDateLimite(dateLimite);
+        task.setResponsableId(responsableId);
+        task.setDateFin(dateFin);
+        task.setStatut(statut);
+
         taskRepository.saveAndFlush(task);
     }
 
@@ -41,5 +50,4 @@ public class TaskService {
     public List<Task> list(Pageable pageable) {
         return taskRepository.findAllBy(pageable).toList();
     }
-
 }

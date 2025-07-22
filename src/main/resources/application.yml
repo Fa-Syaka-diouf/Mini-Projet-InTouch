@@ -1,0 +1,63 @@
+server:
+  port: ${PORT:8080}
+
+logging:
+  level:
+    org.atmosphere: warn
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+
+vaadin:
+  launch-browser: true
+  allowed-packages: com.vaadin,org.vaadin,com.flowingcode,com.elfstack.toys
+  url-mapping: "/*"
+
+
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: ${MYSQL_URL}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASS}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    properties:
+      format_sql: true
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: ${KEYCLOAK_CLIENT_ID}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          keycloak:
+            issuer-uri: ${ISSUER_URI}
+            authorization-uri: ${AUTH_URI}
+            token-uri: ${TOKEN_URI}
+            user-info-uri: ${USERINFO_URI}
+            jwk-set-uri: ${JWK_URI}
+            user-name-attribute: preferred_username
+      resource server:
+        jwt:
+          issuer-uri: ${ISSUER_URI}
+
+
+# Configuration Keycloak
+keycloak:
+  auth-server-url: http://localhost:8081
+  realm: ${MY_REALM}
+  resource: ${KEYCLOAK_CLIENT_ID}
+
+  # Configuration Admin Client pour accéder aux utilisateurs
+  admin-client:
+    client-id: admin-cli
+    client-secret: ${ADMIN_SECRET}

@@ -7,6 +7,7 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
+import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
@@ -41,6 +42,7 @@ import static java.util.Objects.requireNonNull;
  * @see AppUserInfo The application's user information model
  * @see AppUserPrincipal The principal interface that provides access to user information
  */
+@Component
 public class CurrentUser {
 
     private static final Logger log = LoggerFactory.getLogger(CurrentUser.class);

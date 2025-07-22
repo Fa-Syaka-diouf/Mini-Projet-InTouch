@@ -34,7 +34,7 @@ import org.springframework.util.StringUtils;
  * @see IdentityManagementConfiguration
  */
 @EnableWebSecurity
-@Configuration
+//@Configuration
 @ConditionalOnCloudPlatform(CloudPlatform.KUBERNETES)
 public class ControlCenterSecurityConfig extends IdentityManagementConfiguration {
 

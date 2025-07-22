@@ -3,59 +3,76 @@ package com.elfstack.toys.taskmanagement.domain;
 import com.elfstack.toys.base.domain.AbstractEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "task")
+@Table(name = "task", schema = "taskmanager_db")
 public class Task extends AbstractEntity<Long> {
 
     public static final int DESCRIPTION_MAX_LENGTH = 255;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "task_id")
     private Long id;
 
-    @Column(name = "description", nullable = false, length = DESCRIPTION_MAX_LENGTH)
+    @Setter
+    @Getter
+    @Column(name = "libelle", nullable = false)
+    private String libelle;
+
+    @Setter
+    @Getter
+    @Column(name = "description", nullable = false)
     @Size(max = DESCRIPTION_MAX_LENGTH)
     private String description;
 
+    @Setter
+    @Getter
     @Column(name = "creation_date", nullable = false)
     private Instant creationDate;
 
-    @Column(name = "due_date")
+    @Setter
+    @Getter
+    @Column(name = "statut", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private StatutEnum statut;
+
+    @Setter
+    @Getter
+    @Column(name = "responsableId")
+    private String responsableId;
+
+    @Setter
+    @Getter
+    @Column(name = "responsableFirstName")
+    private String responsableFirstName;
+
+    @Setter
+    @Getter
+    @Column(name = "responsableLastName")
+    private String responsableLastName;
+
+    @Setter
+    @Getter
+    @Column(name = "date_limite")
     @Nullable
-    private LocalDate dueDate;
+    private LocalDate dateLimite;
+
+    @Setter
+    @Getter
+    @Column(name = "date_de_fin")
+    @Nullable
+    private LocalDate dateFin;
 
     @Override
     public @Nullable Long getId() {
         return id;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Instant getCreationDate() {
-        return creationDate;
-    }
-
-    public void setCreationDate(Instant creationDate) {
-        this.creationDate = creationDate;
-    }
-
-    public @Nullable LocalDate getDueDate() {
-        return dueDate;
-    }
-
-    public void setDueDate(@Nullable LocalDate dueDate) {
-        this.dueDate = dueDate;
-    }
 }

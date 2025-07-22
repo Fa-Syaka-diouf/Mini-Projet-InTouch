@@ -1,42 +1,61 @@
 services:
-  mysql:
+
+  # MySQL pour Keycloak
+  mysql-keycloak:
     image: mysql:8.0
-    container_name: mysql-db
+    container_name: mysql-keycloak
     restart: always
     ports:
-      - "3307:3306"
+      - "3308:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: taskmanager
+      MYSQL_DATABASE: keycloak_db
       MYSQL_USER: keycloak
-      MYSQL_PASSWORD: keycloak_password
+      MYSQL_PASSWORD: keycloak_pass
     volumes:
-      - mysql_data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password --skip-name-resolve
+      - mysql_keycloak_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_USER}", "-p${MYSQL_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "keycloak", "-pkeycloak_pass"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
 
+  # MySQL pour l'app
+  mysql-app:
+    image: mysql:8.0
+    container_name: mysql-app
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: taskmanager_db
+      MYSQL_USER: task
+      MYSQL_PASSWORD: task
+    volumes:
+      - mysql_app_data:/var/lib/mysql
+
+  # Keycloak connecté à sa propre DB
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.0
     container_name: keycloak-server
-    restart: always
     ports:
       - "8081:8080"
+    volumes:
+      - ./themes:/opt/keycloak/themes
+    depends_on:
+      mysql-keycloak:
+        condition: service_healthy
     environment:
       KC_DB: mysql
-      KC_DB_URL: jdbc:mysql://mysql-db:3306/taskmanager
+      KC_DB_URL: jdbc:mysql://mysql-keycloak:3306/keycloak_db
       KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: keycloak_password
+      KC_DB_PASSWORD: keycloak_pass
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     command: start-dev
-    depends_on:
-      mysql:
-        condition: service_healthy
 
 volumes:
-  mysql_data:
+  mysql_keycloak_data:
+  mysql_app_data:
