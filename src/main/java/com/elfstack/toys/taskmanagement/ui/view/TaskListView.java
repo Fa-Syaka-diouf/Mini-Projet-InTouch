@@ -1,6 +1,7 @@
 package com.elfstack.toys.taskmanagement.ui.view;
 
 import com.elfstack.toys.base.ui.component.ViewToolbar;
+import com.elfstack.toys.base.ui.view.MainLayout;
 import com.elfstack.toys.taskmanagement.domain.Task;
 import com.elfstack.toys.taskmanagement.service.TaskService;
 import com.elfstack.toys.usermanagement.domain.KeycloakUserDto;
@@ -31,7 +32,7 @@ import java.util.Optional;
 
 import static com.vaadin.flow.spring.data.VaadinSpringDataHelpers.toSpringPageRequest;
 
-@Route("task-list")
+@Route(value = "task-list", layout = MainLayout.class)
 @PageTitle("Task List")
 @Menu(order = 0, icon = "vaadin:clipboard-check", title = "Task List")
 @PermitAll
@@ -82,9 +83,7 @@ public class TaskListView extends Main {
         assigneeComboBox.setLabel("Assigner à");
         assigneeComboBox.setPlaceholder("Sélectionner un utilisateur");
         assigneeComboBox.setItemLabelGenerator(user ->
-                String.format("%s %s (%s)",
-                        Optional.ofNullable(user.getFirstName()).orElse(""),
-                        Optional.ofNullable(user.getLastName()).orElse(""),
+                String.format("%s",
                         user.getUsername()
                 ).trim()
         );
@@ -119,7 +118,7 @@ public class TaskListView extends Main {
                 .setHeader("Date limite").setWidth("150px");
         taskGrid.addColumn(task -> Optional.ofNullable(task.getDateFin()).map(dateFormatter::format).orElse("Non définie"))
                 .setHeader("Date de fin").setWidth("150px");
-        taskGrid.addColumn(task -> Optional.of(task.getResponsableId()).map(String::valueOf).orElse("Non assigné"))
+        taskGrid.addColumn(task -> Optional.of(task.getResponsableUsername()).map(String::valueOf).orElse("Non assigné"))
                 .setHeader("Assigné à").setWidth("150px");
         taskGrid.addColumn(task -> Optional.of(task.getStatut()).map(Enum::name).orElse("Indéfini"))
                 .setHeader("Statut").setWidth("120px");
@@ -178,8 +177,7 @@ public class TaskListView extends Main {
         try {
             KeycloakUserDto selectedUser = assigneeComboBox.getValue();
             String responsableId = selectedUser.getId();
-            String responsableFirstName = selectedUser.getFirstName();
-            String responsableLastName = selectedUser.getLastName();
+            String responsableUsername = selectedUser.getUsername();
 
             taskService.createTask(
                     libelle.getValue(),
@@ -187,8 +185,7 @@ public class TaskListView extends Main {
                     dueDate.getValue(),
                     responsableId,
                     endDate.getValue(),
-                    responsableFirstName,
-                    responsableLastName,
+                    responsableUsername,
                     statutComboBox.getValue()
             );
 

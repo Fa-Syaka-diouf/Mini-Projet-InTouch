@@ -12,7 +12,7 @@ import jakarta.annotation.security.PermitAll;
 /**
  * This view shows up when a user navigates to the root ('/') of the application.
  */
-@Route
+@Route (value = "" , layout = MainLayout.class)
 @PermitAll // When security is enabled, allow all authenticated users
 public final class MainView extends Main {
 

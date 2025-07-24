@@ -10,11 +10,11 @@ import org.jspecify.annotations.Nullable;
 import java.time.LocalDate;
 import java.util.Date;
 
+@Getter
 @Entity
 @Table(name= "jourFerie", schema = "taskmanager_db" )
 
-public class JourFerie extends AbstractEntity<Long> {
-
+public class JourFerie{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,24 +23,40 @@ public class JourFerie extends AbstractEntity<Long> {
 
     @Getter
     @Setter
-    @Column(name = "date")
-    private LocalDate date;
-
+    @Column(name = "nom",nullable = false)
+    private String nom;
 
     @Getter
-    @Column(name = "paysCode")
+    @Setter
+    @Column(name = "date_debut",nullable = false)
+    private LocalDate dateDebut;
+
+    @Getter
+    @Setter
+    @Column(name = "date_fin")
+    private LocalDate dateFin;
+
+    @Getter
+    @Setter
+    @Column(name = "pays_code", nullable = false)
     private String paysCode;
 
     @Getter
     @Setter
     @Nullable
-    @Column(name = "description")
+    @Column(name = "description", length = 20000)
     private String description;
 
+    @Getter
+    @Setter
+    @Nullable
+    @Column(name = "type")
+    private String type;
+
+    @Getter
+    @Setter
+    @Column(name = "google_event_id", unique = true)
+    private String googleEventId;
 
 
-    @Override
-    public Long getId() {
-        return id;
-    }
 }
