@@ -21,3 +21,16 @@ The [Getting Started](https://vaadin.com/docs/latest/getting-started) guide will
 Dasher App implementation. You'll learn how to set up your development environment, understand the project 
 structure, and find resources to help you add muscles to your skeleton — transforming it into a fully-featured 
 application.
+
+
+# GESTION KEYCLOAK 
+
+### A execute apres chaque git pull request :  
+1-
+  .\keycloak-export-import.ps1 -action import
+2-
+  docker-compose restart
+
+
+### A execute avant chaque git push request (En me signalant les modifications que tu fais dans keycloak) :  
+".\keycloak-export-import.ps1 -action export"
