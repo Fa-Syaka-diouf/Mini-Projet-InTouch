@@ -20,7 +20,7 @@ import java.time.LocalDate;
 import java.util.concurrent.CompletableFuture;
 
 @Route(value = "admin/Renouvellement", layout = AdminLayout.class)
-@Menu(order = 0, title = "Renouvellement de Base")
+@Menu(order = 2, title = "Renouvellement de Base")
 @PageTitle("Admin Page")
 @PermitAll
 public class DatabaseSynchronised extends Main {

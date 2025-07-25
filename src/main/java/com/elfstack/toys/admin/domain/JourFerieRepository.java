@@ -13,12 +13,15 @@ public interface JourFerieRepository extends JpaRepository<JourFerie,Long> {
     boolean existsByPaysCodeAndDateDebutAndNom(String paysCode, LocalDate dateDebut, String nom);
     Optional<JourFerie> findByGoogleEventId(String googleEventId);
     Optional<JourFerie> findByNomAndPaysCode(String nom, String paysCode);
-    List<JourFerie> findByPaysCode(String paysCode);
-    @Query("SELECT DISTINCT j.paysCode FROM JourFerie j ORDER BY j.paysCode")
-    List<String> findDistinctPaysCode();
+    List<JourFerie> findByPays(String pays);
+    @Query("SELECT DISTINCT j.pays FROM JourFerie j ORDER BY j.pays")
+    List<String> findDistinctPays();
 
-    List<JourFerie> findByPaysCodeAndDateDebutBetween(
-            String paysCode,
+    @Query("SELECT j FROM JourFerie j")
+    List<JourFerie> getAllJourFerie();
+
+    List<JourFerie> findByPaysAndDateDebutBetween(
+            String pays,
             LocalDate startDate,
             LocalDate endDate
     );

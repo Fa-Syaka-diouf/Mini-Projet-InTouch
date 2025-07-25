@@ -30,29 +30,30 @@ public class HolidaySyncService {
         LocalDate startDate = LocalDate.of(year, 1, 1);
         LocalDate endDate = LocalDate.of(year, 12, 31);
 
-        Map<String, String> countryCalendars = countryCalendarConfig.getAllCountryCalendars();
+        Map<String, String[]> countryCalendars = countryCalendarConfig.getAllCountryCalendars();
 
-        for (Map.Entry<String, String> entry : countryCalendars.entrySet()) {
-            String countryCode = entry.getKey();
-            String calendarId = entry.getValue();
+        for (Map.Entry<String, String[]> entry : countryCalendars.entrySet()) {
+            String country = entry.getKey();
+            String calendarId = entry.getValue()[0];
+            String countryCode = entry.getValue()[1];
 
             try {
-                syncCountryHolidays(countryCode, calendarId, startDate, endDate);
+                syncCountryHolidays(countryCode,country, calendarId, startDate, endDate);
             } catch (Exception e) {
-                log.error("Erreur lors de la synchronisation pour {}: {}", countryCode, e.getMessage());
+                log.error("Erreur lors de la synchronisation pour {}: {}", country, e.getMessage());
             }
         }
     }
 
 
-    public void syncCountryHolidays(String countryCode, String calendarId, LocalDate startDate, LocalDate endDate) {
-        log.info(" DÉBUT - Synchronisation pour {} ({})", countryCode, calendarId);
+    public void syncCountryHolidays(String countryCode,String country, String calendarId, LocalDate startDate, LocalDate endDate) {
+        log.info(" DÉBUT - Synchronisation pour {} ({})", country, calendarId);
 
         List<Event> events = googleCalendarService.getHolidayEvents(calendarId, startDate, endDate);
-        log.info(" Récupéré {} événements pour {}", events.size(), countryCode);
+        log.info(" Récupéré {} événements pour {}", events.size(), country);
 
         if (events.isEmpty()) {
-            log.warn(" Aucun événement pour {} - Arrêt du traitement", countryCode);
+            log.warn(" Aucun événement pour {} - Arrêt du traitement", country);
             return;
         }
 
@@ -62,7 +63,7 @@ public class HolidaySyncService {
         for (Event event : events) {
             try {
                 log.debug(" Traitement événement: {}", event.getSummary());
-                JourFerie jourFerie = convertEventToJourFerie(event, countryCode);
+                JourFerie jourFerie = convertEventToJourFerie(event, country, countryCode);
 
                 if (jourFerie != null) {
                     Optional<JourFerie> existing = jourFerieRepository.findByGoogleEventId(event.getId());
@@ -94,16 +95,17 @@ public class HolidaySyncService {
             }
         }
 
-        log.info("✅ FIN - {}: {} nouveaux, {} mis à jour", countryCode, newHolidays, updatedHolidays);
+        log.info("✅ FIN - {}: {} nouveaux, {} mis à jour", country, newHolidays, updatedHolidays);
     }
 
-    private JourFerie convertEventToJourFerie(Event event, String countryCode) {
+    private JourFerie convertEventToJourFerie(Event event, String country, String countryCode) {
       if (event.getSummary() == null) {
             return null;
         }
 
         JourFerie jourFerie = new JourFerie();
         jourFerie.setPaysCode(countryCode);
+        jourFerie.setPays(country);
         jourFerie.setNom(event.getSummary());
         jourFerie.setDescription("No description");
         jourFerie.setGoogleEventId(event.getId());
@@ -142,6 +144,8 @@ public class HolidaySyncService {
         existing.setNom(updated.getNom());
         existing.setDescription(updated.getDescription());
         existing.setDateDebut(updated.getDateDebut());
+        existing.setPays(updated.getPays());
+        existing.setPaysCode(updated.getPaysCode());
         existing.setDateFin(updated.getDateFin());
         existing.setType(updated.getType());
     }
@@ -149,15 +153,24 @@ public class HolidaySyncService {
         existing.setDateFin(updated.getDateFin());
     }
 
-    public List<JourFerie> getHolidaysByCountry(String countryCode) {
-        return jourFerieRepository.findByPaysCode(countryCode.toLowerCase());
+    public List<JourFerie> getHolidaysByCountry(String country) {
+        return jourFerieRepository.findByPays(country);
     }
     public List<String> getAllCountries() {
-        return jourFerieRepository.findDistinctPaysCode();
+        return jourFerieRepository.findDistinctPays();
     }
-    public List<JourFerie> getHolidaysByCountryAndYear(String countryCode, int year) {
+    public List<JourFerie> getHolidaysByCountryAndYear(String country, int year) {
         LocalDate startDate = LocalDate.of(year, 1, 1);
         LocalDate endDate = LocalDate.of(year, 12, 31);
-        return jourFerieRepository.findByPaysCodeAndDateDebutBetween(countryCode.toLowerCase(), startDate, endDate);
+        return jourFerieRepository.findByPaysAndDateDebutBetween(country.toLowerCase(), startDate, endDate);
+    }
+    /**
+     * Récupère tous les jours fériés de tous les pays
+     */
+    public List<JourFerie> getAllJourFerie() {
+        return jourFerieRepository.getAllJourFerie();
+    }
+    public JourFerie saveJourFerie(JourFerie jourFerie) {
+        return jourFerieRepository.save(jourFerie);
     }
 }
