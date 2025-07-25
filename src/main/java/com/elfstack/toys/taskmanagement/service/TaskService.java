@@ -27,7 +27,7 @@ public class TaskService {
 
     @Transactional
     public void createTask(String libelle, String description, @Nullable LocalDate dateLimite,
-                           @Nullable String responsableId,  @Nullable LocalDate dateFin, String responsableFirstName, String responsableLastName, StatutEnum statut ) {
+                           @Nullable String responsableId,  @Nullable LocalDate dateFin, String responsableUsername, StatutEnum statut ) {
         if ("fail".equals(description)) {
             throw new RuntimeException("This is for testing the error handler");
         }
@@ -36,8 +36,7 @@ public class TaskService {
         task.setLibelle(libelle);
         task.setDescription(description);
         task.setCreationDate(clock.instant());
-        task.setResponsableFirstName(responsableFirstName);
-        task.setResponsableLastName(responsableLastName);
+        task.setResponsableUsername(responsableUsername);
         task.setDateLimite(dateLimite);
         task.setResponsableId(responsableId);
         task.setDateFin(dateFin);
