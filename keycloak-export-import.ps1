@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory=$true)]
     [ValidateSet("export", "import")]
     [string]$action
 )
@@ -8,95 +8,46 @@ param(
 $CONFIG_DIR = "keycloak-config"
 $REALM_NAME = "task-management"
 $REALM_FILE = "$REALM_NAME"+"-realm"+".json"
-$FULL_PATH = Join-Path $CONFIG_DIR $REALM_FILE
+$LOCAL_REALM_PATH = "$CONFIG_DIR\$REALM_FILE"
+
+function Ensure-Config-Dir {
+    if (-not (Test-Path $CONFIG_DIR)) {
+        New-Item -ItemType Directory -Path $CONFIG_DIR | Out-Null
+        Write-Host "Created directory: $CONFIG_DIR"
+    }
+}
 
 function Export-Realm {
-    # Créer le dossier s'il n'existe pas
-    if (-not (Test-Path -Path $CONFIG_DIR)) {
-        New-Item -ItemType Directory -Path $CONFIG_DIR | Out-Null
-        Write-Host "Dossier '$CONFIG_DIR' créé."
+    Ensure-Config-Dir
+
+    # Delete old file if exists
+    if (Test-Path $LOCAL_REALM_PATH) {
+        Remove-Item $LOCAL_REALM_PATH
+        Write-Host "Old realm file deleted: $LOCAL_REALM_PATH"
     }
 
-    # Vérifie si le fichier existe déjà
-    if (Test-Path -Path $FULL_PATH) {
-        $response = Read-Host "Le fichier '$FULL_PATH' existe déjà. Voulez-vous l'écraser ? (o/n)"
-        if ($response -ne 'o' -and $response -ne 'O') {
-            Write-Host "Export annulé. Le fichier existant n'a pas été modifié."
-            return
-        }
-    }
+    docker exec -it keycloak-server /opt/keycloak/bin/kc.sh export --dir /opt/keycloak/data/export --realm $REALM_NAME --users realm_file
+    docker cp keycloak-server:/opt/keycloak/data/export/$REALM_FILE $LOCAL_REALM_PATH
 
-    Write-Host "Démarrage de l'export du realm '$REALM_NAME'..."
-
-    # Export du realm
-    $exportResult = docker exec keycloak-server /opt/keycloak/bin/kc.sh export --dir /opt/keycloak/data/export --realm $REALM_NAME --users realm_file 2>&1
-
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Erreur lors de l'export : $exportResult"
-        return
-    }
-
-    # Vérifier si le fichier a été créé dans le conteneur
-    $fileExists = docker exec keycloak-server test -f "/opt/keycloak/data/export/$REALM_FILE" 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Le fichier exporté n'a pas été trouvé dans le conteneur."
-        Write-Host "Vérification du contenu du dossier export :"
-        docker exec keycloak-server ls -la /opt/keycloak/data/export/
-        return
-    }
-
-    # Copier le fichier du conteneur vers l'hôte
-    $copyResult = docker cp "keycloak-server:/opt/keycloak/data/export/$REALM_FILE" $FULL_PATH 2>&1
-
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Erreur lors de la copie : $copyResult"
-        return
-    }
-
-    Write-Host "Export terminé : $FULL_PATH"
+    Write-Host "Export done. Realm saved to: $LOCAL_REALM_PATH"
 }
 
 function Import-Realm {
-    if (-not (Test-Path -Path $FULL_PATH)) {
-        Write-Host "Le fichier '$FULL_PATH' n'existe pas. Impossible d'importer."
-        Write-Host "Fichiers disponibles dans '$CONFIG_DIR' :"
-        if (Test-Path -Path $CONFIG_DIR) {
-            Get-ChildItem -Path $CONFIG_DIR -Filter "*.json" | ForEach-Object {
-                Write-Host "   - $($_.Name)"
-            }
-        } else {
-            Write-Host "   Le dossier '$CONFIG_DIR' n'existe pas."
-        }
-        return
+    if (-not (Test-Path $LOCAL_REALM_PATH)) {
+        Write-Host "Error: Realm file not found at $LOCAL_REALM_PATH"
+        exit 1
     }
 
-    Write-Host "Démarrage de l'import du realm '$REALM_NAME'..."
+    docker cp $LOCAL_REALM_PATH keycloak-server:/opt/keycloak/data/import/$REALM_FILE
+    docker exec -it keycloak-server /opt/keycloak/bin/kc.sh import --file /opt/keycloak/data/import/$REALM_FILE --override true
 
-    # Créer le dossier import dans le conteneur s'il n'existe pas
-    docker exec keycloak-server mkdir -p /opt/keycloak/data/import
-
-    # Copier le fichier vers le conteneur
-    $copyResult = docker cp $FULL_PATH "keycloak-server:/opt/keycloak/data/import/$REALM_FILE" 2>&1
-
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Erreur lors de la copie vers le conteneur : $copyResult"
-        return
-    }
-
-    # Importer le realm
-    $importResult = docker exec keycloak-server /opt/keycloak/bin/kc.sh import --file "/opt/keycloak/data/import/$REALM_FILE" --override true 2>&1
-
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Erreur lors de l'import : $importResult"
-        return
-    }
-
-    Write-Host "Import terminé."
+    Write-Host "Import done from: $LOCAL_REALM_PATH"
 }
 
-# Execution
-switch ($action) {
-    "export" { Export-Realm }
-    "import" { Import-Realm }
-    default { Write-Host "Action invalide. Utilisez 'export' ou 'import'." }
+if ($action -eq "export") {
+    Export-Realm
+} elseif ($action -eq "import") {
+    Import-Realm
+} else {
+    Write-Host "Invalid action. Use 'export' or 'import'."
 }
