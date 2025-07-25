@@ -19,24 +19,24 @@ public class AdminPageView extends Main {
 
     private final HolidaySyncService holidaySyncService;
     private Grid<JourFerie> grid;
+    private final List<String> allCountries;
+
 
     public AdminPageView(HolidaySyncService holidaySyncService) {
         this.holidaySyncService = holidaySyncService;
+        allCountries = holidaySyncService.getAllCountries();
         setupUI();
+
     }
 
     private void setupUI() {
         setSizeFull();
         add(new H1("Zone Admin"));
         ComboBox<String> countryComboBox = new ComboBox<>("Sélectionner un pays");
-        countryComboBox.setItems("Senegal",
-                "France", "Germany", "Spain", "Italy", "United Kingdom",
-                "United States", "Canada", "Japan", "Australia", "Brazil",
-                "Netherlands", "Belgium", "Switzerland", "Austria", "Sweden"
-        );
+        countryComboBox.setItems(allCountries);
         countryComboBox.setPlaceholder("Choisir un pays...");
         countryComboBox.addValueChangeListener(event -> {
-            String selectedCountry = event.getValue().toString();
+            String selectedCountry = event.getValue();
             if (selectedCountry != null) {
                 loadHolidaysForCountry(selectedCountry);
             }
