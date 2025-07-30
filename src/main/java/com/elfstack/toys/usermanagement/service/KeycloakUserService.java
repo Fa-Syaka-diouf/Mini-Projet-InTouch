@@ -1,44 +1,38 @@
 package com.elfstack.toys.usermanagement.service;
 
-import com.elfstack.toys.usermanagement.domain.KeycloakProperties;
 import com.elfstack.toys.usermanagement.domain.KeycloakUserDto;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
-@Slf4j
 public class KeycloakUserService {
 
-        private final KeycloakAuthService keycloakAuthService;
-        private final KeycloakProperties keycloakProperties;
-        private final WebClient webClient;
+    private final RestTemplate restTemplate;
+    private final String baseUrl;
 
-        public KeycloakUserService(KeycloakAuthService keycloakAuthService, KeycloakProperties keycloakProperties) {
-            this.keycloakAuthService = keycloakAuthService;
-            this.keycloakProperties = keycloakProperties;
-            this.webClient = WebClient.builder()
-                    .baseUrl(keycloakProperties.getAuthServerUrl())
-                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .build();
-        }
+    public KeycloakUserService(RestTemplate restTemplate,
+                               @Value("${keycloak.api.url}") String baseUrl) {
+        this.restTemplate = restTemplate;
+        this.baseUrl = baseUrl;
+    }
 
     public List<KeycloakUserDto> getAllUsers() {
-        String realm = keycloakProperties.getRealm();
-        String accessToken = keycloakAuthService.getAdminToken();
-
-        return webClient.get()
-                .uri("/admin/realms/{realm}/users", realm)
-                .headers(headers -> headers.setBearerAuth(accessToken))
-                .retrieve()
-                .bodyToFlux(KeycloakUserDto.class)
-                .collectList()
-                .block();
+        String url = "http://localhost:8080/auth/admin/realms/task-management/users";
+        ResponseEntity<KeycloakUserDto[]> response = restTemplate.getForEntity(baseUrl + "/users", KeycloakUserDto[].class);
+        KeycloakUserDto[] users = response.getBody();
+        return users != null ? Arrays.asList(users) : List.of();
     }
+
+    public List<String> getAllUsernames() {
+        return getAllUsers().stream()
+                .map(KeycloakUserDto::getUsername)
+                .collect(Collectors.toList());
+    }
+
 }

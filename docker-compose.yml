@@ -1,5 +1,20 @@
 services:
 
+  # MySQL pour le formulaire de tâches
+  mysql-form:
+    image: mysql:8.0
+    container_name: mysql-form
+    restart: always
+    ports:
+      - "3309:3306"  # Port défini pour mysql-form
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_FORM_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_FORM_DATABASE}
+      MYSQL_USER: ${MYSQL_FORM_USER}
+      MYSQL_PASSWORD: ${MYSQL_FORM_PASSWORD}
+    volumes:
+      - mysql_form_data:/var/lib/mysql
+
   # MySQL pour Keycloak
   mysql-keycloak:
     image: mysql:8.0
@@ -8,20 +23,21 @@ services:
     ports:
       - "3307:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: keycloak_db
-      MYSQL_USER: keycloak
-      MYSQL_PASSWORD: keycloak_pass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_KEYCLOAK_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_KEYCLOAK_DATABASE}
+      MYSQL_USER: ${MYSQL_KEYCLOAK_USER}
+      MYSQL_PASSWORD: ${MYSQL_KEYCLOAK_PASSWORD}
     volumes:
       - mysql_keycloak_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "keycloak", "-pkeycloak_pass"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_KEYCLOAK_USER}", "-p${MYSQL_KEYCLOAK_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
 
-  # MySQL pour l'app
+  # MySQL pour l'application principale
+
   mysql-app:
     image: mysql:8.0
     container_name: mysql-app
@@ -29,14 +45,14 @@ services:
     ports:
       - "3307:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: taskmanager_db
       MYSQL_USER: task
       MYSQL_PASSWORD: task
     volumes:
       - mysql_app_data:/var/lib/mysql
 
-  # Keycloak connecté à sa propre DB
+  # Keycloak connecté à sa base de données
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.0
     container_name: keycloak-server
@@ -44,18 +60,34 @@ services:
       - "8081:8080"
     volumes:
       - ./themes:/opt/keycloak/themes
+#      - ./task-management-realm.json:/opt/keycloak/data/import/task-management-realm.json  # Ajout de cette ligne
     depends_on:
       mysql-keycloak:
         condition: service_healthy
     environment:
       KC_DB: mysql
-      KC_DB_URL: jdbc:mysql://mysql-keycloak:3306/keycloak_db
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: keycloak_pass
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-    command: start-dev
+      KC_DB_URL: jdbc:mysql://mysql-keycloak:3306/${MYSQL_KEYCLOAK_DATABASE}
+      KC_DB_USERNAME: ${MYSQL_KEYCLOAK_USER}
+      KC_DB_PASSWORD: ${MYSQL_KEYCLOAK_PASSWORD}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    command: start-dev --import-realm  # Ajout du flag --import-realm
+
+  spring-app:
+    build:
+      context: .
+    container_name: spring-app
+    depends_on:
+      - mysql-app
+    environment:
+      MYSQL_URL: jdbc:mysql://mysql-app:3306/taskmanager_db
+      MYSQL_USER: task
+      MYSQL_PASS: task
+      PORT: 8080
+    ports:
+      - "8080:8080"
 
 volumes:
+  mysql_form_data:
   mysql_keycloak_data:
   mysql_app_data:

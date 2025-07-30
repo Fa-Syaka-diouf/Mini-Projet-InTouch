@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,7 +28,7 @@ public class TaskService {
 
     @Transactional
     public void createTask(String libelle, String description, @Nullable LocalDate dateLimite,
-                           @Nullable String responsableId,  @Nullable LocalDate dateFin, String responsableUsername, StatutEnum statut ) {
+                           @Nullable String responsableId,  @Nullable LocalDate dateFin, String responsableLastname, String responsableFirstname, StatutEnum statut ) {
         if ("fail".equals(description)) {
             throw new RuntimeException("This is for testing the error handler");
         }
@@ -36,7 +37,8 @@ public class TaskService {
         task.setLibelle(libelle);
         task.setDescription(description);
         task.setCreationDate(clock.instant());
-        task.setResponsableUsername(responsableUsername);
+        task.setResponsableLastName(responsableLastname);
+        task.setResponsableFirstName(responsableFirstname);
         task.setDateLimite(dateLimite);
         task.setResponsableId(responsableId);
         task.setDateFin(dateFin);
@@ -48,5 +50,16 @@ public class TaskService {
     @Transactional(readOnly = true)
     public List<Task> list(Pageable pageable) {
         return taskRepository.findAllBy(pageable).toList();
+    }
+
+    public String saveUploadedFile(InputStream inputStream, String fileName, String mimeType) {
+        return fileName;
+    }
+
+    public void save(Task task) {
+    }
+
+    public Task findAll() {
+        return null;
     }
 }
