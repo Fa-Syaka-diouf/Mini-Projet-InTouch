@@ -21,7 +21,9 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.component.html.Span;
 
 import com.elfstack.toys.usermanagement.service.KeycloakUserService;
+import jakarta.annotation.security.PermitAll;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.io.InputStream;
@@ -30,8 +32,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
+import com.elfstack.toys.admin.service.CalendarService;
 
+@PermitAll
 public class TaskForm extends FormLayout {
+    private final CalendarService calendarService;
     private KeycloakUserService keycloakUserService = null;
 
     private TextField title = new TextField("Saisissez le libellé (*)");
@@ -58,14 +63,21 @@ public class TaskForm extends FormLayout {
     private ComboBox<String> responsible = new ComboBox<>("Responsable de la tâche");
 
 
-    public TaskForm(KeycloakUserService keycloakUserService) {
-
+    public TaskForm(KeycloakUserService keycloakUserService, CalendarService calendarService) {
+        this.calendarService=calendarService;
         this.keycloakUserService = keycloakUserService;
 //        responsible.setItems(keycloakUserService.getAllUsernames());
         configureFields();
         configureUpload();
         configureBinder();
         configureButtons();
+
+        // Quand on change le pays ou le SLA, recalculer
+        country.addValueChangeListener(e -> updateDueDate());
+        slaDays.addValueChangeListener(e -> updateDueDate());
+
+        // Ajoute la liste de pays dans la comboBox
+        country.setItems(calendarService.getAvailableCountries());
 
         add(title, status, description, responsible, country, slaDays, dueDate, priority, upload,
                 new HorizontalLayout(save, cancel));
@@ -335,4 +347,15 @@ public class TaskForm extends FormLayout {
         upload.clearFileList();
         upload.getElement().setProperty("files", "");
     }
+
+    private void updateDueDate() {
+        if (slaDays.getValue() != null && country.getValue() != null) {
+            LocalDate startDate = LocalDate.now(); // ou date de création réelle
+            String countryCode = country.getValue();
+
+            LocalDate computedDueDate = CalendarService.calculateDueDate(startDate, slaDays.getValue(), countryCode);
+            dueDate.setValue(computedDueDate);
+        }
+    }
+
 }

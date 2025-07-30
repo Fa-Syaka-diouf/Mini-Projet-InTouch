@@ -1,5 +1,6 @@
 package com.elfstack.toys.taskmanagement.ui.view;
 
+import com.elfstack.toys.admin.service.CalendarService;
 import com.elfstack.toys.taskmanagement.domain.Task;
 import com.elfstack.toys.taskmanagement.domain.TaskStatus;
 import com.elfstack.toys.taskmanagement.service.TaskService;
@@ -27,19 +28,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class TaskFormView extends VerticalLayout {
 
+    private TaskForm form;
+
     @Autowired
     private TaskService taskService;
+    private final CalendarService calendarService;
     private final KeycloakUserService keycloakUserService;
 
     private Grid<Task> grid = new Grid<>(Task.class);
-    private TaskForm form ;
     private Dialog formDialog = new Dialog();
 
-    public TaskFormView(TaskService taskService, KeycloakUserService keycloakUserService) {
+    public TaskFormView(TaskService taskService, KeycloakUserService keycloakUserService, CalendarService calendarService)
+    {
+        this.form = new TaskForm(keycloakUserService, calendarService);
         this.taskService = taskService;
         this.keycloakUserService = keycloakUserService;
-
-        this.form = new TaskForm(keycloakUserService);
+        this.calendarService = calendarService;
 
         // Pays supportés
 //        countryBox.setItems("FR", "US", "DE", "SN");
@@ -199,6 +203,4 @@ public class TaskFormView extends VerticalLayout {
     private void updateList() {
         grid.setItems(taskService.findAll());
     }
-
-
 }
