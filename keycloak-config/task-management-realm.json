@@ -29,13 +29,13 @@
   "oauth2DevicePollingInterval" : 5,
   "enabled" : true,
   "sslRequired" : "external",
-  "registrationAllowed" : false,
+  "registrationAllowed" : true,
   "registrationEmailAsUsername" : false,
   "rememberMe" : false,
   "verifyEmail" : false,
   "loginWithEmailAllowed" : true,
   "duplicateEmailsAllowed" : false,
-  "resetPasswordAllowed" : false,
+  "resetPasswordAllowed" : true,
   "editUsernameAllowed" : false,
   "bruteForceProtected" : false,
   "permanentLockout" : false,
@@ -53,7 +53,7 @@
       "description" : "${role_default-roles}",
       "composite" : true,
       "composites" : {
-        "realm" : [ "offline_access", "uma_authorization" ],
+        "realm" : [ "offline_access", "uma_authorization", "user" ],
         "client" : {
           "account" : [ "view-profile", "manage-account" ]
         }
@@ -275,7 +275,23 @@
         "containerId" : "a4cf308f-1aef-4ac8-982f-0dd6fe3c1603",
         "attributes" : { }
       } ],
-      "task-management-app" : [ ],
+      "task-management-app" : [ {
+        "id" : "598cf6bb-8a0e-4ea0-a938-49df2792672d",
+        "name" : "client_admin",
+        "description" : "admin de l'application",
+        "composite" : false,
+        "clientRole" : true,
+        "containerId" : "68f1f8ca-f7b0-44e2-9f4e-860cbc86c0b6",
+        "attributes" : { }
+      }, {
+        "id" : "6a4ac4df-c299-4380-a543-e0ceed144804",
+        "name" : "client_user",
+        "description" : "utilisateur simple",
+        "composite" : false,
+        "clientRole" : true,
+        "containerId" : "68f1f8ca-f7b0-44e2-9f4e-860cbc86c0b6",
+        "attributes" : { }
+      } ],
       "account" : [ {
         "id" : "6fb6e3b3-be7e-4f76-8854-bd3e52e27447",
         "name" : "manage-consent",
@@ -418,6 +434,9 @@
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
     "realmRoles" : [ "default-roles-task-management", "admin" ],
+    "clientRoles" : {
+      "task-management-app" : [ "client_admin" ]
+    },
     "notBefore" : 0,
     "groups" : [ ]
   }, {
@@ -432,6 +451,32 @@
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
     "realmRoles" : [ "default-roles-task-management" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "aeab115c-369a-402f-bca9-c872c23f74b1",
+    "username" : "user",
+    "firstName" : "user",
+    "lastName" : "simple",
+    "email" : "user@gmail.com",
+    "emailVerified" : true,
+    "createdTimestamp" : 1753697014735,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "id" : "38b09940-5506-45f7-bed2-aafdb90b29d9",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1753706932988,
+      "secretData" : "{\"value\":\"cuMZKbjYSGs+KY7I1IcXak3CuM6XRVwueXF08DPSGv1tmC+YYI6Q1MZSlE1c/KkLvWNdnzX7m2Kfh1dTnnU6wA==\",\"salt\":\"m0fN4X5DssuaSvjGpnZXag==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-task-management", "user" ],
+    "clientRoles" : {
+      "task-management-app" : [ "client_user" ]
+    },
     "notBefore" : 0,
     "groups" : [ ]
   } ],
@@ -677,21 +722,6 @@
     "fullScopeAllowed" : true,
     "nodeReRegistrationTimeout" : -1,
     "protocolMappers" : [ {
-      "id" : "315617f4-859d-4c56-9d80-097af117e777",
-      "name" : "role",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usermodel-realm-role-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "introspection.token.claim" : "true",
-        "multivalued" : "true",
-        "userinfo.token.claim" : "true",
-        "id.token.claim" : "true",
-        "lightweight.claim" : "false",
-        "access.token.claim" : "true",
-        "jsonType.label" : "String"
-      }
-    }, {
       "id" : "9797db69-28ee-4fa0-a05b-6fcd5596c458",
       "name" : "country",
       "protocol" : "openid-connect",
