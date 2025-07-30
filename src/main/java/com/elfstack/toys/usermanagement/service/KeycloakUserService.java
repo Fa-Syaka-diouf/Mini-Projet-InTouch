@@ -23,6 +23,7 @@ public class KeycloakUserService {
     }
 
     public List<KeycloakUserDto> getAllUsers() {
+        String url = "http://localhost:8080/auth/admin/realms/task-management/users";
         ResponseEntity<KeycloakUserDto[]> response = restTemplate.getForEntity(baseUrl + "/users", KeycloakUserDto[].class);
         KeycloakUserDto[] users = response.getBody();
         return users != null ? Arrays.asList(users) : List.of();
