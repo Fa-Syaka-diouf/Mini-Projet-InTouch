@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
@@ -49,5 +50,16 @@ public class TaskService {
     @Transactional(readOnly = true)
     public List<Task> list(Pageable pageable) {
         return taskRepository.findAllBy(pageable).toList();
+    }
+
+    public String saveUploadedFile(InputStream inputStream, String fileName, String mimeType) {
+        return fileName;
+    }
+
+    public void save(Task task) {
+    }
+
+    public Task findAll() {
+        return null;
     }
 }

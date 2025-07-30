@@ -8,6 +8,11 @@ import org.springframework.context.annotation.Bean;
 
 import java.time.Clock;
 
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+
+
+
 @SpringBootApplication
 @Theme("default")
 public class Application implements AppShellConfigurator {
@@ -15,6 +20,15 @@ public class Application implements AppShellConfigurator {
     @Bean
     public Clock clock() {
         return Clock.systemDefaultZone(); // You can also use Clock.systemUTC()
+    }
+
+    @Configuration
+    public class AppConfig {
+
+        @Bean
+        public RestTemplate restTemplate() {
+            return new RestTemplate();
+        }
     }
 
     public static void main(String[] args) {

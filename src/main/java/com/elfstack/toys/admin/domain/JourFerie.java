@@ -11,25 +11,25 @@ import java.time.LocalDate;
 import java.util.Date;
 
 @Entity
-@Table(name= "jourFerie", schema = "taskmanager_db" )
+@Table(name= "jour_ferie", schema = "taskmanager_db" )
 
 public class JourFerie extends AbstractEntity<Long> {
 
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "jourFerie_Id")
+    @Column(name = "jour_ferie_id")
     private Long id;
 
     @Getter
     @Setter
-    @Column(name = "date")
+    @Column(name = "date_debut")
     private LocalDate date;
 
 
     @Getter
-    @Column(name = "paysCode")
-    private String paysCode;
+    @Column(name = "pays_code")
+    private String pays_code;
 
     @Getter
     @Setter

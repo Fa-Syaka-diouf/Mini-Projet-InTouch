@@ -49,13 +49,19 @@ spring:
       resource server:
         jwt:
           issuer-uri: ${ISSUER_URI}
-
+    # Désactiver OAuth2 temporairement
+    autoconfigure:
+      exclude:
+        - org.springframework.boot.autoconfigure.security.oauth2.OAuth2AutoConfiguration
+        - org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientAutoConfiguration
 
 # Configuration Keycloak
 keycloak:
   auth-server-url: http://localhost:8081
   realm: ${MY_REALM}
   resource: ${KEYCLOAK_CLIENT_ID}
+  api:
+    url: http://localhost:8080/auth/admin/realms/task-management/users
 
   # Configuration Admin Client pour accéder aux utilisateurs
   admin-client:
