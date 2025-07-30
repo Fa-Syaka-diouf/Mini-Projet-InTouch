@@ -36,10 +36,15 @@ public class JourFerie{
     @Column(name = "date_fin")
     private LocalDate dateFin;
 
-    @Getter
+
     @Setter
     @Column(name = "pays_code", nullable = false)
     private String paysCode;
+
+    @Getter
+    @Setter
+    @Column(name = "pays", nullable = true)
+    private String pays;
 
     @Getter
     @Setter
@@ -58,5 +63,9 @@ public class JourFerie{
     @Column(name = "google_event_id", unique = true)
     private String googleEventId;
 
+
+    public String getPaysCode() {
+        return paysCode.toUpperCase();
+    }
 
 }
