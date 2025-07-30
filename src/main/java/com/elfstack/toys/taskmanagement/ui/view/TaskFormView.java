@@ -1,10 +1,7 @@
 package com.elfstack.toys.taskmanagement.ui.view;
 
-<<<<<<< HEAD
 import com.elfstack.toys.admin.ui.AdminLayout;
-=======
 import com.elfstack.toys.admin.service.CalendarService;
->>>>>>> c96f0fce69a647710e28dcfca923a3eee7d2578e
 import com.elfstack.toys.taskmanagement.domain.Task;
 import com.elfstack.toys.taskmanagement.domain.TaskStatus;
 import com.elfstack.toys.taskmanagement.service.TaskService;
