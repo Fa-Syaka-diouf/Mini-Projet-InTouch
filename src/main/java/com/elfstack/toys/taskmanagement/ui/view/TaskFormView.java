@@ -1,5 +1,6 @@
 package com.elfstack.toys.taskmanagement.ui.view;
 
+import com.elfstack.toys.admin.ui.AdminLayout;
 import com.elfstack.toys.taskmanagement.domain.Task;
 import com.elfstack.toys.taskmanagement.domain.TaskStatus;
 import com.elfstack.toys.taskmanagement.service.TaskService;
@@ -17,14 +18,16 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 //import java.net.http.HttpClient;
 
-@PermitAll
-@Route("Formulaire")
+
 @PageTitle("Créer une tâche")
 @Component
+@Route(value = "admin/task-management", layout = AdminLayout.class)
+@RolesAllowed("ADMIN")
 public class TaskFormView extends VerticalLayout {
 
     @Autowired

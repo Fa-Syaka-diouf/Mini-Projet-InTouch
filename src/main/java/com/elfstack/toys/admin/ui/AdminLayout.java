@@ -2,6 +2,7 @@ package com.elfstack.toys.admin.ui;
 
 import com.elfstack.toys.admin.service.HolidaySyncService;
 import com.elfstack.toys.security.dev.DevSecurityService;
+import com.elfstack.toys.taskmanagement.ui.view.TaskFormView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
@@ -83,7 +84,7 @@ public class AdminLayout extends AppLayout implements RouterLayout {
         SideNavItem dashboard = new SideNavItem("Tableau de bord", AdminPage.class, new Icon(VaadinIcon.HOME));
         SideNavItem holiday = new SideNavItem("Jours Fériés", AdminJourFerie.class, new Icon(VaadinIcon.CALENDAR));
         SideNavItem Utilisateurs = new SideNavItem("Gestion des Utilisateurs", UserManagement.class, new Icon(VaadinIcon.USERS));
-        SideNavItem Task_list = new SideNavItem("Liste des taches", TaskManagement.class, new Icon(VaadinIcon.CLIPBOARD_CHECK));
+        SideNavItem Task_list = new SideNavItem("Liste des taches", TaskFormView.class, new Icon(VaadinIcon.CLIPBOARD_CHECK));
         SideNavItem Base_donne_holiday = new SideNavItem("Paramètre", AdminSettings.class, new Icon(VaadinIcon.COG));
 
         nav.addItem(dashboard, Task_list, holiday,Utilisateurs, Base_donne_holiday);

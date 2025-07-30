@@ -6,7 +6,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import jakarta.annotation.security.RolesAllowed;
 
-@Route(value = "task-list" , layout = MainLayout.class)
+@Route(value = "task" , layout = MainLayout.class)
 @RolesAllowed({"ADMIN", "USER"})
 public class MainTask extends Main {
 
