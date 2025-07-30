@@ -24,14 +24,12 @@ public class HolidaySyncService {
     private final GoogleCalendarService googleCalendarService;
     private final JourFerieRepository jourFerieRepository;
     private final CountryCalendarConfig countryCalendarConfig;
-
+    private Map<String, String[]> countryCalendars;
     @Transactional
     public void syncAllCountries(int year) {
         LocalDate startDate = LocalDate.of(year, 1, 1);
         LocalDate endDate = LocalDate.of(year, 12, 31);
-
-        Map<String, String[]> countryCalendars = countryCalendarConfig.getAllCountryCalendars();
-
+        countryCalendars = countryCalendarConfig.getAllCountryCalendars();
         for (Map.Entry<String, String[]> entry : countryCalendars.entrySet()) {
             String country = entry.getKey();
             String calendarId = entry.getValue()[0];
@@ -44,7 +42,15 @@ public class HolidaySyncService {
             }
         }
     }
-
+    public String countryCodeSetup(String Country){
+        countryCalendars = countryCalendarConfig.getAllCountryCalendars();
+        for (Map.Entry<String, String[]> entry : countryCalendars.entrySet()){
+            if(Country.equals(entry.getKey())){
+                return entry.getValue()[1];
+            }
+        }
+        return "Null";
+    }
 
     public void syncCountryHolidays(String countryCode,String country, String calendarId, LocalDate startDate, LocalDate endDate) {
         log.info(" DÉBUT - Synchronisation pour {} ({})", country, calendarId);
@@ -171,6 +177,8 @@ public class HolidaySyncService {
         return jourFerieRepository.getAllJourFerie();
     }
     public JourFerie saveJourFerie(JourFerie jourFerie) {
+        String paysCode = countryCodeSetup(jourFerie.getPays());
+        jourFerie.setPaysCode(paysCode);
         return jourFerieRepository.save(jourFerie);
     }
 }

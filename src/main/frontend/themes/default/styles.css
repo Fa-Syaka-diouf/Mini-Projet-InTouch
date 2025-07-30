@@ -1,2 +1,20 @@
+vaadin-side-nav-item vaadin-icon,
+vaadin-side-nav-item:hover vaadin-icon,
+vaadin-side-nav-item[current] vaadin-icon {
+    color: white !important;
+}
 
-@import url("dev-login.css");
+vaadin-side-nav-item[current],
+vaadin-side-nav-item:hover {
+    background-color: #a51b1b !important;
+}
+
+vaadin-side-nav-item::part(content){
+    color: white !important;
+}
+vaadin-side-nav-item[current]::part(content),
+vaadin-side-nav-item[current]::part(link),
+vaadin-side-nav-item::part(content):hover,
+vaadin-side-nav-item::part(link):hover {
+    color: #243163 !important;
+}

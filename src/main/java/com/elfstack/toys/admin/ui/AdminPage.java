@@ -9,16 +9,16 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 
 @Route(value = "admin", layout = AdminLayout.class)
+@RolesAllowed("ADMIN")
 @PageTitle("Admin Page")
-@PermitAll
 @Menu(order = 0, title = "Dashboard")
 public final class AdminPage extends Main {
 
         AdminPage() {
             addClassName(LumoUtility.Padding.MEDIUM);
-            add(new ViewToolbar("Admin Page"));
             add(new Div("Please select a view from the menu on the left."));
         }
 }

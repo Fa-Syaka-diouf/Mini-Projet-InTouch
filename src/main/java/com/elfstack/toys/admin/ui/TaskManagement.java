@@ -1,7 +1,7 @@
-package com.elfstack.toys.taskmanagement.ui.view;
+package com.elfstack.toys.admin.ui;
 
 import com.elfstack.toys.base.ui.component.ViewToolbar;
-import com.elfstack.toys.base.ui.view.MainLayout;
+import com.elfstack.toys.taskmanagement.domain.StatutEnum;
 import com.elfstack.toys.taskmanagement.domain.Task;
 import com.elfstack.toys.taskmanagement.service.TaskService;
 import com.elfstack.toys.usermanagement.domain.KeycloakUserDto;
@@ -11,19 +11,15 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
-import com.elfstack.toys.taskmanagement.domain.StatutEnum;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextArea;
-import com.vaadin.flow.router.Menu;
-import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.time.Clock;
@@ -33,10 +29,9 @@ import java.util.Optional;
 
 import static com.vaadin.flow.spring.data.VaadinSpringDataHelpers.toSpringPageRequest;
 
-@Route(value = "Create-task")
-@PageTitle("Task List")
-@RolesAllowed({"ADMIN", "USER"})
-public class TaskListView extends Main {
+@Route(value = "admin/task-management", layout = AdminLayout.class)
+@RolesAllowed("ADMIN")
+public class TaskManagement extends Main {
 
     private final TaskService taskService;
     private final KeycloakUserService keycloakUserService;
@@ -50,7 +45,7 @@ public class TaskListView extends Main {
     final Button createBtn;
     final Grid<Task> taskGrid;
 
-    public TaskListView(TaskService taskService, KeycloakUserService keycloakUserService, Clock clock) {
+    TaskManagement(TaskService taskService, KeycloakUserService keycloakUserService, Clock clock){
         this.taskService = taskService;
         this.keycloakUserService = keycloakUserService;
 
@@ -146,7 +141,6 @@ public class TaskListView extends Main {
         add(new ViewToolbar("Liste des Tâches", formLayout));
         add(taskGrid);
     }
-
     private void loadUsers() {
         try {
             var users = keycloakUserService.getAllUsers();
@@ -212,4 +206,5 @@ public class TaskListView extends Main {
         assigneeComboBox.clear();
         statutComboBox.setValue(StatutEnum.A_FAIRE);
     }
+
 }

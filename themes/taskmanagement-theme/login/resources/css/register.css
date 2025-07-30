@@ -55,7 +55,7 @@ header, #kc-header {
     overflow: hidden;
 }
 
-.login-container {
+.register-container {
     width: 100%;
     height: 100vh;
     background: #F4F7FA;
@@ -65,7 +65,7 @@ header, #kc-header {
 }
 
 /* Left side - Illustration */
-.login-illustration {
+.register-illustration {
     background: #F4F7FA;
     padding: 2rem;
     display: flex;
@@ -77,32 +77,32 @@ header, #kc-header {
     height: 100vh;
 }
 
-.login-illustration > img {
+.register-illustration > img {
     width: min(350px, 80%);
     height: auto;
     max-height: 60vh;
     object-fit: contain;
 }
 
-/* Right side - Login Form */
-.login-form-section {
+/* Right side - Register Form */
+.register-form-section {
     background-color: #FFFFFF;
     border-radius: 10px;
-    padding: 3rem;
-    margin: 2rem;
+    padding: 2.5rem;
+    margin: 1.5rem;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     box-sizing: border-box;
     height: calc(100vh - 3rem);
     overflow-y: auto;
 }
 
-.login-header {
-    padding: 0 1rem 2rem;
+.register-header {
+    padding: 0 1rem 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
     justify-content: center;
     flex-shrink: 0;
 }
@@ -114,33 +114,46 @@ header, #kc-header {
 }
 
 .logo-text {
-    width: min(150px, 80%);
+    width: min(140px, 75%);
     height: auto;
 }
 
 .logo-img {
-    width: min(70px, 60px);
+    width: min(60px, 50px);
     height: auto;
 }
 
-.login-header > div:first-child {
+.register-header > div:first-child {
     align-items: flex-start;
+}
+
+.register-title {
+    color: #243163;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 0.5rem;
 }
 
 /* Form styles */
 form {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
+    gap: 1rem;
     flex: 1;
     min-height: 0;
-    justify-content: space-between;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 
 .form-label {
@@ -149,7 +162,7 @@ form {
     font-size: 0.875rem;
 }
 
-.form-input {
+.form-input, .form-select {
     padding: 0.75rem 1rem;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
@@ -159,7 +172,17 @@ form {
     min-height: 44px;
 }
 
-.form-input:focus {
+.form-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+    padding-right: 3rem;
+}
+
+.form-input:focus, .form-select:focus {
     outline: none;
     border: 2px solid transparent;
     background: linear-gradient(white, white) padding-box,
@@ -188,6 +211,7 @@ form {
     transition: all 0.2s ease;
     background: #ffffff;
 }
+
 /* Animation de rotation du gradient */
 @keyframes borderRotate {
     0% {
@@ -254,67 +278,13 @@ form {
 }
 
 /* Icône œil */
-#eye-icon {
+#eye-icon-1, #eye-icon-2 {
     font-size: 1rem;
     line-height: 1;
     user-select: none;
 }
 
-.form-options {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 0.3rem 0;
-}
-
-.checkbox-container {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    color: #4a5568;
-}
-
-.checkbox-container input[type="checkbox"] {
-
-}
-
-.checkmark {
-    width: 18px;
-    height: 18px;
-    border: 2px solid #cbd5e0;
-    border-radius: 3px;
-    position: relative;
-    transition: all 0.2s ease;
-}
-
-.checkbox-container input[type="checkbox"]:checked + .checkmark {
-    background-color: #4299e1;
-    border-color: #4299e1;
-}
-
-.checkbox-container input[type="checkbox"]:checked + .checkmark:after {
-    content: "✓";
-    position: absolute;
-    color: white;
-    font-size: 12px;
-    top: -2px;
-    left: 2px;
-}
-
-.forgot-password {
-    color: #e53e3e;
-    text-decoration: none;
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
-.forgot-password:hover {
-    text-decoration: underline;
-}
-
-.login-button{
+.register-button {
     background: #243163;
     color: white;
     border: none;
@@ -324,7 +294,7 @@ form {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-top: 0.3rem;
+    margin-top: 1rem;
     min-height: 44px;
     animation: colorPulse 2s ease-in-out infinite alternate;
 }
@@ -340,29 +310,29 @@ form {
     }
 }
 
-.login-button:hover {
+.register-button:hover {
     transform: translateY(-1px);
     animation-duration: 1s;
 }
 
-.login-button:active {
+.register-button:active {
     transform: translateY(0);
 }
 
-.register-link {
+.login-link {
     text-align: center;
-    margin-top: 0.8rem;
+    margin-top: 1rem;
     font-size: 0.875rem;
     color: #718096;
 }
 
-.register-link a {
+.login-link a {
     color: #e53e3e;
     text-decoration: none;
     font-weight: 500;
 }
 
-.register-link a:hover {
+.login-link a:hover {
     text-decoration: underline;
 }
 
@@ -374,56 +344,83 @@ form {
 
 /* Responsive design */
 @media (max-width: 768px) {
-    .login-container {
+    .register-container {
         grid-template-columns: 1fr;
     }
 
-    .login-illustration {
+    .register-illustration {
         display: none;
     }
 
-    .login-form-section {
+    .register-form-section {
         padding: 1.5rem;
         margin: 1rem;
         height: calc(100vh - 2rem);
     }
 
-    .login-header {
-        padding: 0 0 1.5rem;
-        gap: 1.5rem;
+    .register-header {
+        padding: 0 0 1rem;
+        gap: 1rem;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
     }
 
     form {
-        gap: 1rem;
+        gap: 0.8rem;
     }
 }
 
-@media (max-height: 600px) {
-    .login-form-section {
+@media (max-width: 480px) {
+    .register-form-section {
         padding: 1rem;
+        margin: 0.5rem;
+    }
+
+    .register-title {
+        font-size: 1.25rem;
+    }
+
+    .form-row {
+        gap: 0.6rem;
+    }
+
+    form {
+        gap: 0.6rem;
+    }
+}
+
+@media (max-height: 700px) {
+    .register-form-section {
+        padding: 1.5rem;
         margin: 1rem;
     }
 
-    .login-header {
+    .register-header {
         padding: 0 0 1rem;
-        gap: 1rem;
+        gap: 0.8rem;
     }
 
     form {
         gap: 0.8rem;
     }
 
-    .form-input {
+    .form-input, .form-select {
         padding: 0.6rem 1rem;
+        min-height: 40px;
     }
 
-    .login-button {
+    .register-button {
         padding: 0.7rem 2rem;
+        margin-top: 0.8rem;
+        min-height: 40px;
     }
 }
 
-@media (max-height: 500px) {
-    .login-illustration > img {
+@media (max-height: 600px) {
+    .register-illustration > img {
         max-height: 40vh;
     }
 
@@ -435,12 +432,34 @@ form {
         width: min(50px, 40px);
     }
 
-    .login-header {
-        gap: 0.8rem;
+    .register-header {
+        gap: 0.6rem;
+    }
+
+    .register-title {
+        font-size: 1.1rem;
+        margin-top: 0.3rem;
     }
 
     form {
         gap: 0.6rem;
+    }
+
+    .form-input, .form-select {
+        padding: 0.5rem 0.8rem;
+        min-height: 36px;
+        font-size: 0.9rem;
+    }
+
+    .password-input-container .form-input {
+        padding-right: 2.5rem;
+    }
+
+    .register-button {
+        padding: 0.6rem 1.5rem;
+        margin-top: 0.6rem;
+        min-height: 36px;
+        font-size: 0.9rem;
     }
 }
 
