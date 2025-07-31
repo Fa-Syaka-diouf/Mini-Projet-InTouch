@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,5 +26,12 @@ public interface JourFerieRepository extends JpaRepository<JourFerie,Long> {
             LocalDate startDate,
             LocalDate endDate
     );
+
+//    Arrays findByPaysCodeAndDateDebutBetween(String paysCode, LocalDate currentDate, LocalDate currentDate1);
+    List<JourFerie> findByPaysCodeAndDateDebutBetween(String paysCode, LocalDate start, LocalDate end);
+
+
+    @Query("SELECT DISTINCT j.paysCode FROM JourFerie j ORDER BY j.paysCode")
+    List<String> findDistinctPaysCode();
 
 }

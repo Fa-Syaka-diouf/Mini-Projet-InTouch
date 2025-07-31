@@ -13,7 +13,7 @@ public class CalendarService {
     private static JourFerieRepository jourFerieRepository ;
 
     public CalendarService(JourFerieRepository jourFerieRepository) {
-        this.jourFerieRepository = jourFerieRepository;
+        CalendarService.jourFerieRepository = jourFerieRepository;
     }
 
     public static LocalDate calculateDueDate(LocalDate startDate, int slaDays, String paysCode) {
@@ -34,15 +34,22 @@ public class CalendarService {
             }
 
             // Vérifie si c’est un jour férié dans ce pays
-            boolean isFerie = jourFerieRepository.findByPaysCodeAndDateDebutBetween(
-                    paysCode,
-                    currentDate,
-                    currentDate
-            ).stream().findAny().isPresent();
+//            boolean isFerie = jourFerieRepository.findByPaysCodeAndDateDebutBetween(
+//                    paysCode,
+//                    currentDate,
+//                    currentDate
+//            ).stream().findAny().isPresent();
 
-            if (isFerie) {
-                continue;
-            }
+//            boolean isFerie = !jourFerieRepository.findByPaysCodeAndDateDebutBetween(
+//                    paysCode,
+//                    currentDate,
+//                    currentDate
+//            ).isEmpty();
+
+
+//            if (isFerie) {
+//                continue;
+//            }
 
             // Si ni week-end ni jour férié, on compte ce jour comme ouvré
             workingDaysAdded++;
