@@ -4,15 +4,9 @@ import com.elfstack.toys.base.domain.AbstractEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
-import org.jspecify.annotations.Nullable;
-
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAccessor;
+
 
 @Entity
 @Table(name = "task", schema = "taskmanager_db")
@@ -25,11 +19,10 @@ public class Task extends AbstractEntity<Long> {
     private Long id;
 
     @NotBlank(message = "Le titre est obligatoire")
-    @Size(max = 255, message = "Le titre ne peut pas dépasser 255 caractères")
+    @Size(max = 255)
     @Column(name = "title", nullable = false)
     private String title;
 
-    @NotNull(message = "Le statut est obligatoire")
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private TaskStatus status = TaskStatus.NOUVEAU;
@@ -38,11 +31,10 @@ public class Task extends AbstractEntity<Long> {
     @Column(name = "description")
     private String description;
 
-    //    @NotNull(message = "Veuillez sélectionner un pays")
     @Column(name = "country", nullable = false)
     private String country;
 
-    @Min(value = 1, message = "Le SLA doit être d'au moins 1 jour")
+    @Min(1)
     @Column(name = "sla_days")
     private Integer slaDays;
 
@@ -60,53 +52,23 @@ public class Task extends AbstractEntity<Long> {
     private String attachmentPath;
 
     @Column(name = "created_date")
-    private LocalDate createdDate;
+    private LocalDate createdDate = LocalDate.now();
 
-    @Setter
-    @Getter
-    @Column(name = "responsableId")
+    @Column(name = "responsable_id")
     private String responsableId;
 
-    @Setter
-    @Getter
-    @Column(name = "responsableUsername")
+    @Column(name = "responsable_username")
     private String responsableUsername;
 
+    @Column(name = "responsable")
+    private String responsable;
 
-
-    @Setter
-    @Getter
     @Column(name = "date_de_fin")
-    @Nullable
     private LocalDate dateFin;
 
-    @Override
-    public @Nullable Long getId() {
-        return id;
-    }
+    // Getters & Setters
 
-    private String responsibleUsername;
-
-    // Constructeurs
-    public Task() {
-        this.createdDate = LocalDate.now();
-        this.status = TaskStatus.PENDING;
-    }
-
-    public Task(String title, String country) {
-        this();
-        this.title = title;
-        this.country = country;
-    }
-
-    // Méthode pour calculer automatiquement la date limite
-    public void calculateDueDate() {
-        if (slaDays != null && createdDate != null) {
-            this.dueDate = createdDate.plusDays(slaDays);
-        }
-    }
-
-    // Getters et Setters
+    public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public String getTitle() { return title; }
@@ -124,7 +86,7 @@ public class Task extends AbstractEntity<Long> {
     public Integer getSlaDays() { return slaDays; }
     public void setSlaDays(Integer slaDays) {
         this.slaDays = slaDays;
-        calculateDueDate(); // Recalcul automatique
+        calculateDueDate();
     }
 
     public LocalDate getDueDate() { return dueDate; }
@@ -142,51 +104,24 @@ public class Task extends AbstractEntity<Long> {
     public LocalDate getCreatedDate() { return createdDate; }
     public void setCreatedDate(LocalDate createdDate) {
         this.createdDate = createdDate;
-        calculateDueDate(); // Recalcul automatique
+        calculateDueDate();
     }
 
-    public void setResponsableFirstName(String responsableFirstName) {
+    public String getResponsableId() { return responsableId; }
+    public void setResponsableId(String responsableId) { this.responsableId = responsableId; }
+
+    public String getResponsableUsername() { return responsableUsername; }
+    public void setResponsableUsername(String responsableUsername) { this.responsableUsername = responsableUsername; }
+
+    public String getResponsable() { return responsable; }
+    public void setResponsable(String responsable) { this.responsable = responsable; }
+
+    public LocalDate getDateFin() { return dateFin; }
+    public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
+
+    public void calculateDueDate() {
+        if (slaDays != null && createdDate != null) {
+            this.dueDate = createdDate.plusDays(slaDays);
+        }
     }
-
-    public void setResponsableLastName(String responsableLastName) {
-    }
-
-    public Object getStatut() {
-        return null;
-    }
-
-    public void setDateLimite(@Nullable LocalDate dateLimite) {
-    }
-
-    public void setCreationDate(Instant instant) {
-    }
-
-    public void setStatut(StatutEnum statut) {
-    }
-
-    public void setLibelle(String libelle) {
-    }
-
-    public Object getLibelle() {
-        return null;
-    }
-
-    public Object getDateLimite() {
-        return null;
-    }
-
-    public TemporalAccessor getCreationDate() {
-        return null;
-    }
-
-    private String responsible;
-
-    public String getResponsable() {
-        return responsible;
-    }
-
-    public void setResponsable(String responsible) {
-        this.responsible = responsible;
-    }
-
 }

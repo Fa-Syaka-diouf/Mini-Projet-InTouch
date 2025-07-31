@@ -22,7 +22,6 @@ import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-//import java.net.http.HttpClient;
 
 
 @PageTitle("Créer une tâche")
