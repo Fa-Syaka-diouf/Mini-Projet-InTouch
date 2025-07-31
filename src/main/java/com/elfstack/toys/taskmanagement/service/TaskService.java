@@ -34,13 +34,15 @@ public class TaskService {
         }
 
         var task = new Task();
-        task.setLibelle(libelle);
+        task.setTitle(libelle);
         task.setDescription(description);
-        task.setCreationDate(clock.instant());
-        task.setResponsableLastName(responsableLastname);
-        task.setResponsableFirstName(responsableFirstname);
-        task.setDateLimite(dateLimite);
+        task.setCreatedDate(LocalDate.from(clock.instant()));
+        task.setResponsableUsername(responsableLastname);
+        assert dateLimite != null;
+        task.setDueDate(dateLimite);
+        assert responsableId != null;
         task.setResponsableId(responsableId);
+        assert dateFin != null;
         task.setDateFin(dateFin);
         task.setStatut(statut);
 
