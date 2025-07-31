@@ -77,7 +77,7 @@ public class TaskFormView extends VerticalLayout {
         grid.addColumn(Task::getTitle).setHeader("Titre").setAutoWidth(true);
 
         grid.addColumn(new ComponentRenderer<>(task -> {
-            TaskStatus status = task.getStatus();
+            TaskStatus status = task.getStatut();
             String label = status != null ? status.getDisplayName() : "Inconnu";
             String badge = status != null ? status.getBadgeVariant() : "contrast";
 
@@ -92,8 +92,8 @@ public class TaskFormView extends VerticalLayout {
         // Personnaliser l'affichage du statut
         grid.getColumnByKey("status").setRenderer(
                 new ComponentRenderer<>(task -> {
-                    Span statusBadge = new Span(task.getStatus() != null ? task.getStatus().getDisplayName() : "Aucun statut");
-                    statusBadge.getElement().getThemeList().add("badge " + task.getStatus().getBadgeVariant());
+                    Span statusBadge = new Span(task.getStatut() != null ? task.getStatut().getDisplayName() : "Aucun statut");
+                    statusBadge.getElement().getThemeList().add("badge " + task.getStatut().getBadgeVariant());
                     return statusBadge;
                 })
         );

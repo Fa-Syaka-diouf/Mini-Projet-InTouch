@@ -92,7 +92,7 @@ public class TaskForm extends FormLayout {
 
         binder.forField(responsible)
                 .asRequired("Responsable obligatoire")
-                .bind(Task::getResponsable, Task::setResponsable);
+                .bind(Task::getResponsableUsername, Task::setResponsableUsername);
 
 
     }
@@ -252,7 +252,7 @@ public class TaskForm extends FormLayout {
 
         binder.forField(status)
                 .asRequired("Le statut est obligatoire")
-                .bind(Task::getStatus, Task::setStatus);
+                .bind(Task::getStatut, Task::setStatut);
 
         binder.forField(description)
                 .bind(Task::getDescription, Task::setDescription);
@@ -282,27 +282,24 @@ public class TaskForm extends FormLayout {
         save.getStyle().set("margin-right", "var(--lumo-space-s)");
     }
     private Task task;
+
     public void setTask(Task task) {
-        if(task == null){
+        if (task == null) {
             clear();
             return;
         }
-        this.task=task;
+        this.task = task;
         binder.setBean(task);
         currentUploadedFile = null;
 
-        // Réinitialiser l'upload si nouvelle tâche
         if (task.getId() == null) {
             upload.clearFileList();
             upload.getElement().setProperty("files", "");
         }
-    else {
-        binder.setBean(new Task()); // au pire, pour que ça ne casse pas
-    }
     }
 
+
     public Task getTask() {
-//        return binder.getBean();
         return this.task;
     }
 

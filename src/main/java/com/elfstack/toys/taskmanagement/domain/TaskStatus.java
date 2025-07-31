@@ -26,4 +26,9 @@ public enum TaskStatus {
     public String getBadgeVariant() {
         return "";
     }
+
+    public String getValue() {
+        return displayName;
+    }
+
 }

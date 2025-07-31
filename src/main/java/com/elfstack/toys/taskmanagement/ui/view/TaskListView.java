@@ -2,7 +2,6 @@ package com.elfstack.toys.taskmanagement.ui.view;
 
 import com.elfstack.toys.base.ui.component.ViewToolbar;
 import com.elfstack.toys.taskmanagement.domain.Task;
-//import com.elfstack.toys.taskmanagement.service.KeycloakUserService;
 import com.elfstack.toys.taskmanagement.service.TaskService;
 import com.elfstack.toys.usermanagement.domain.KeycloakUserDto;
 import com.vaadin.flow.component.button.Button;
@@ -10,7 +9,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
-import com.elfstack.toys.taskmanagement.domain.StatutEnum;
+import com.elfstack.toys.taskmanagement.domain.TaskStatus;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
@@ -39,12 +38,12 @@ public class TaskListView extends Main {
     private final TaskService taskService;
 //    private final KeycloakUserService keycloakUserService;
 
-    final TextField libelle;
+    final TextField title;
     final TextArea description;
-    final DatePicker dueDate;
-    final DatePicker endDate;
+    final DatePicker due_date;
+    final DatePicker date_de_fin;
     final ComboBox<KeycloakUserDto> assigneeComboBox;
-    final ComboBox<StatutEnum> statutComboBox;
+    final ComboBox<TaskStatus> statutComboBox;
     final Button createBtn;
     final Grid<Task> taskGrid;
 
@@ -53,11 +52,11 @@ public class TaskListView extends Main {
         this.taskService = taskService;
 //        this.keycloakUserService = keycloakUserService;
 
-        libelle = new TextField();
-        libelle.setPlaceholder("Libellé de la tâche");
-        libelle.setAriaLabel("Task libelle");
-        libelle.setRequired(true);
-        libelle.setMinWidth("15em");
+        title = new TextField();
+        title.setPlaceholder("Libellé de la tâche");
+        title.setAriaLabel("Task title");
+        title.setRequired(true);
+        title.setMinWidth("15em");
 
         description = new TextArea();
         description.setPlaceholder("Description détaillée de la tâche");
@@ -66,16 +65,16 @@ public class TaskListView extends Main {
         description.setMinWidth("20em");
         description.setHeight("100px");
 
-        dueDate = new DatePicker();
-        dueDate.setPlaceholder("Date limite");
-        dueDate.setAriaLabel("Due date");
-        dueDate.setLabel("Date limite");
+        due_date = new DatePicker();
+        due_date.setPlaceholder("Date limite");
+        due_date.setAriaLabel("Due date");
+        due_date.setLabel("Date limite");
 
 
-        endDate = new DatePicker();
-        endDate.setPlaceholder("Date de fin prévue");
-        endDate.setAriaLabel("End date");
-        endDate.setLabel("Date de fin");
+        date_de_fin = new DatePicker();
+        date_de_fin.setPlaceholder("Date de fin prévue");
+        date_de_fin.setAriaLabel("End date");
+        date_de_fin.setLabel("Date de fin");
 
 
         assigneeComboBox = new ComboBox<>();
@@ -94,9 +93,9 @@ public class TaskListView extends Main {
         statutComboBox = new ComboBox<>();
         statutComboBox.setLabel("Statut");
         statutComboBox.setPlaceholder("Sélectionner un statut");
-        statutComboBox.setItems(StatutEnum.values());
-        statutComboBox.setItemLabelGenerator(StatutEnum::name);
-        statutComboBox.setValue(StatutEnum.A_FAIRE); // Statut par défaut
+        statutComboBox.setItems(TaskStatus.values());
+        statutComboBox.setItemLabelGenerator(TaskStatus::name);
+        statutComboBox.setValue(TaskStatus.NOUVEAU); // Statut par défaut
         statutComboBox.setMinWidth("12em");
 
 
@@ -113,26 +112,26 @@ public class TaskListView extends Main {
 
         taskGrid = new Grid<>();
 //        taskGrid.setItems(query -> taskService.list(toSpringPageRequest(query)).stream());
-        taskGrid.addColumn(Task::getLibelle).setHeader("Libellé").setWidth("200px");
+        taskGrid.addColumn(Task::getTitle).setHeader("Libellé").setWidth("200px");
         taskGrid.addColumn(Task::getDescription).setHeader("Description").setWidth("300px");
 //        taskGrid.addColumn(task -> Optional.ofNullable(task.getDateLimite()).map(dateFormatter::format).orElse("Aucune"))
 //                .setHeader("Date limite").setWidth("150px");
-        taskGrid.addColumn(task -> Optional.ofNullable(task.getDateFin()).map(dateFormatter::format).orElse("Non définie"))
+        taskGrid.addColumn(task -> Optional.of(task.getDueDate()).map(dateFormatter::format).orElse("Non définie"))
                 .setHeader("Date de fin").setWidth("150px");
         taskGrid.addColumn(task -> Optional.of(task.getResponsableId()).map(String::valueOf).orElse("Non assigné"))
                 .setHeader("Assigné à").setWidth("150px");
 //        taskGrid.addColumn(task -> Optional.of(task.getStatut()).map(Enum::name).orElse("Indéfini"))
 //                .setHeader("Statut").setWidth("120px");
-        taskGrid.addColumn(task -> dateTimeFormatter.format(task.getCreationDate()))
+        taskGrid.addColumn(task -> dateTimeFormatter.format(task.getCreatedDate()))
                 .setHeader("Date de création").setWidth("180px");
         taskGrid.setSizeFull();
 
 
-        HorizontalLayout firstRow = new HorizontalLayout(libelle, assigneeComboBox, statutComboBox);
+        HorizontalLayout firstRow = new HorizontalLayout(title, assigneeComboBox, statutComboBox);
         firstRow.setWidthFull();
         firstRow.setDefaultVerticalComponentAlignment(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.END);
 
-        HorizontalLayout secondRow = new HorizontalLayout(dueDate, endDate, createBtn);
+        HorizontalLayout secondRow = new HorizontalLayout(due_date, date_de_fin, createBtn);
         secondRow.setWidthFull();
         secondRow.setDefaultVerticalComponentAlignment(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.END);
 
@@ -161,7 +160,7 @@ public class TaskListView extends Main {
 
     private void createTask() {
 
-        if (libelle.isEmpty()) {
+        if (title.isEmpty()) {
             Notification.show("Le libellé est obligatoire", 3000, Notification.Position.BOTTOM_END)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
@@ -182,11 +181,11 @@ public class TaskListView extends Main {
             String responsableLastName = selectedUser.getLastName();
 
             taskService.createTask(
-                    libelle.getValue(),
+                    title.getValue(),
                     description.getValue(),
-                    dueDate.getValue(),
+                    due_date.getValue(),
                     responsableId,
-                    endDate.getValue(),
+                    date_de_fin.getValue(),
                     responsableFirstName,
                     responsableLastName,
                     statutComboBox.getValue()
@@ -208,11 +207,11 @@ public class TaskListView extends Main {
     }
 
     private void clearForm() {
-        libelle.clear();
+        title.clear();
         description.clear();
-        dueDate.clear();
-        endDate.clear();
+        due_date.clear();
+        date_de_fin.clear();
         assigneeComboBox.clear();
-        statutComboBox.setValue(StatutEnum.A_FAIRE);
+        statutComboBox.setValue(TaskStatus.NOUVEAU);
     }
 }

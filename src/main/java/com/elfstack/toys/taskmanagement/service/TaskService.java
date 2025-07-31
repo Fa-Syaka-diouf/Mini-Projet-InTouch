@@ -1,8 +1,8 @@
 package com.elfstack.toys.taskmanagement.service;
 
-import com.elfstack.toys.taskmanagement.domain.StatutEnum;
 import com.elfstack.toys.taskmanagement.domain.Task;
 import com.elfstack.toys.taskmanagement.domain.TaskRepository;
+import com.elfstack.toys.taskmanagement.domain.TaskStatus;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +28,7 @@ public class TaskService {
 
     @Transactional
     public void createTask(String libelle, String description, @Nullable LocalDate dateLimite,
-                           @Nullable String responsableId,  @Nullable LocalDate dateFin, String responsableLastname, String responsableFirstname, StatutEnum statut ) {
+                           @Nullable String responsableId, @Nullable LocalDate dateFin, String responsableLastname, String responsableFirstname, TaskStatus statut ) {
         if ("fail".equals(description)) {
             throw new RuntimeException("This is for testing the error handler");
         }
