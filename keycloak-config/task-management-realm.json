@@ -454,6 +454,32 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
+    "id" : "4575a7f7-de29-4ea5-bb23-cd91bb862c8e",
+    "username" : "soukeynaaa",
+    "firstName" : "Adja Soukeyna",
+    "lastName" : "DIOP",
+    "email" : "git@ept.sn",
+    "emailVerified" : true,
+    "createdTimestamp" : 1754052728767,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "id" : "e06a3410-2c5a-4d84-b75f-b98ca387c511",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1754052893918,
+      "secretData" : "{\"value\":\"q8uLP5Frh490hihfSw9gT+n4IQcMUlPFwUyvM9vDe5EjAIQXbdrtc2poRjD1lm4fK2Z3yfI02QN8IP4r7PVu+Q==\",\"salt\":\"aDcGDpQcABMBJu8yVWLkCA==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-task-management", "admin" ],
+    "clientRoles" : {
+      "task-management-app" : [ "client_admin" ]
+    },
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
     "id" : "aeab115c-369a-402f-bca9-c872c23f74b1",
     "username" : "user",
     "firstName" : "user",
@@ -579,7 +605,9 @@
     "publicClient" : true,
     "frontchannelLogout" : false,
     "protocol" : "openid-connect",
-    "attributes" : { },
+    "attributes" : {
+      "post.logout.redirect.uris" : "+"
+    },
     "authenticationFlowBindingOverrides" : { },
     "fullScopeAllowed" : false,
     "nodeReRegistrationTimeout" : 0,
@@ -605,7 +633,9 @@
     "publicClient" : false,
     "frontchannelLogout" : false,
     "protocol" : "openid-connect",
-    "attributes" : { },
+    "attributes" : {
+      "post.logout.redirect.uris" : "+"
+    },
     "authenticationFlowBindingOverrides" : { },
     "fullScopeAllowed" : false,
     "nodeReRegistrationTimeout" : 0,
@@ -631,7 +661,9 @@
     "publicClient" : false,
     "frontchannelLogout" : false,
     "protocol" : "openid-connect",
-    "attributes" : { },
+    "attributes" : {
+      "post.logout.redirect.uris" : "+"
+    },
     "authenticationFlowBindingOverrides" : { },
     "fullScopeAllowed" : false,
     "nodeReRegistrationTimeout" : 0,
@@ -921,6 +953,7 @@
       "config" : {
         "introspection.token.claim" : "true",
         "multivalued" : "true",
+        "userinfo.token.claim" : "true",
         "user.attribute" : "foo",
         "id.token.claim" : "true",
         "access.token.claim" : "true",
@@ -961,7 +994,8 @@
       "config" : {
         "id.token.claim" : "true",
         "access.token.claim" : "true",
-        "introspection.token.claim" : "true"
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true"
       }
     } ]
   }, {
@@ -1292,7 +1326,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-usermodel-property-mapper", "saml-role-list-mapper", "oidc-usermodel-attribute-mapper", "oidc-full-name-mapper", "saml-user-attribute-mapper", "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-property-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-property-mapper", "oidc-usermodel-property-mapper", "oidc-address-mapper", "oidc-full-name-mapper", "saml-role-list-mapper", "oidc-usermodel-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper" ]
       }
     }, {
       "id" : "5c8e0259-bcc0-429f-9ecf-a53c2bcb1991",
@@ -1301,7 +1335,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-full-name-mapper", "oidc-address-mapper", "saml-role-list-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper", "saml-user-property-mapper", "oidc-usermodel-property-mapper", "oidc-sha256-pairwise-sub-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-role-list-mapper", "oidc-address-mapper", "oidc-full-name-mapper", "saml-user-property-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-usermodel-attribute-mapper", "oidc-sha256-pairwise-sub-mapper" ]
       }
     }, {
       "id" : "432e291b-c56d-4f41-a10a-7acbe2de078e",

@@ -76,6 +76,14 @@ public class Task extends AbstractEntity<Long> {
     private String responsableUsername;
 
     @Setter
+    @Column(name = "responsable_lastname")
+    private String responsableLastname;
+
+    @Setter
+    @Column(name = "responsable_firstname")
+    private String responsableFirstname;
+
+    @Setter
     @Column(name = "date_de_fin")
     private LocalDate dateFin;
 
