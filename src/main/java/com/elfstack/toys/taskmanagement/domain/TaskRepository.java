@@ -31,8 +31,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // Recherche par pays
     List<Task> findByCountry(String country);
 
-    // Recherche par statut
-    List<Task> findByStatus(TaskStatus status);
+    List<Task> findByStatut(TaskStatus statut);
 
     // Vérifier l'unicité du titre
     boolean existsByTitleIgnoreCase(String title);
@@ -42,7 +41,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByPriorityOrderByCreatedDateDesc(TaskPriority priority);
 
     // Tâches en retard
-    @Query("SELECT t FROM Task t WHERE t.dueDate < CURRENT_DATE AND t.status != :status")
+    @Query("SELECT t FROM Task t WHERE t.dueDate < CURRENT_DATE AND t.statut != :status")
     List<Task> findOverdueTasks(TaskStatus status);
 
 //    ManagedTypes findAllBy(Pageable pageable);

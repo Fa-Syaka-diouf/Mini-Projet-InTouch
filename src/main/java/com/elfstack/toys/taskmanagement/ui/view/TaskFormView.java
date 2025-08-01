@@ -77,24 +77,24 @@ public class TaskFormView extends VerticalLayout {
         grid.addColumn(Task::getTitle).setHeader("Titre").setAutoWidth(true);
 
         grid.addColumn(new ComponentRenderer<>(task -> {
-            TaskStatus status = task.getStatut();
-            String label = status != null ? status.getDisplayName() : "Inconnu";
-            String badge = status != null ? status.getBadgeVariant() : "contrast";
+            TaskStatus statut = task.getStatut();
+            String label = statut != null ? statut.getDisplayName() : "Inconnu";
+            String badge = statut != null ? statut.getBadgeVariant() : "contrast";
 
             Span badgeSpan = new Span(label);
             badgeSpan.getElement().getThemeList().add("badge " + badge);
             return badgeSpan;
         })).setHeader("Statut").setAutoWidth(true);
 
-        grid.setColumns("title", "status", "country", "priority", "dueDate");
+        grid.setColumns("title", "statut", "country", "priority", "dueDate");
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
 
         // Personnaliser l'affichage du statut
-        grid.getColumnByKey("status").setRenderer(
+        grid.getColumnByKey("statut").setRenderer(
                 new ComponentRenderer<>(task -> {
-                    Span statusBadge = new Span(task.getStatut() != null ? task.getStatut().getDisplayName() : "Aucun statut");
-                    statusBadge.getElement().getThemeList().add("badge " + task.getStatut().getBadgeVariant());
-                    return statusBadge;
+                    Span statutBadge = new Span(task.getStatut().getDisplayName());
+                    statutBadge.getElement().getThemeList().add("badge " + task.getStatut().getBadgeVariant());
+                    return statutBadge;
                 })
         );
 

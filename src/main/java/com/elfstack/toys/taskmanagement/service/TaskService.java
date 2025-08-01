@@ -21,32 +21,44 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final Clock clock;
 
-    TaskService(TaskRepository taskRepository, Clock clock) {
+    public TaskService(TaskRepository taskRepository, Clock clock) {
         this.taskRepository = taskRepository;
         this.clock = clock;
     }
 
+    /**
+     * Crée une nouvelle tâche et la sauvegarde en base.
+     */
     @Transactional
-    public void createTask(String libelle, String description, @Nullable LocalDate dateLimite,
-                           @Nullable String responsableId, @Nullable LocalDate dateFin, String responsableLastname, String responsableFirstname, TaskStatus statut ) {
-        if ("fail".equals(description)) {
+    public void createTask(String title, String description, @Nullable LocalDate dueDate,
+                           @Nullable String responsableId, @Nullable LocalDate endDate,
+                           String responsableFirstName, String responsableLastName, TaskStatus status) {
+
+        if ("fail".equalsIgnoreCase(description)) {
             throw new RuntimeException("This is for testing the error handler");
         }
 
-        var task = new Task();
-        task.setTitle(libelle);
+        Task task = new Task();
+        task.setTitle(title);
         task.setDescription(description);
-        task.setCreatedDate(LocalDate.from(clock.instant()));
-        task.setResponsableUsername(responsableLastname);
-        assert dateLimite != null;
-        task.setDueDate(dateLimite);
-        assert responsableId != null;
-        task.setResponsableId(responsableId);
-        assert dateFin != null;
-        task.setDateFin(dateFin);
-        task.setStatut(statut);
+        task.setCreatedDate(LocalDate.now(clock));
+        task.setDueDate(dueDate);
+        task.setDateFin(endDate);
+        task.setStatut(status);
 
-        taskRepository.saveAndFlush(task);
+        if (responsableId != null) {
+            task.setResponsableId(responsableId);
+        }
+
+        String fullName = (responsableFirstName != null ? responsableFirstName : "") +
+                " " +
+                (responsableLastName != null ? responsableLastName : "");
+        task.setResponsableUsername(fullName.trim());
+
+        // Tu peux aussi stocker l'username complet si tu veux
+        task.setResponsableUsername(responsableLastName); // ou autre logique ici
+
+        taskRepository.save(task);
     }
 
     @Transactional(readOnly = true)
@@ -54,14 +66,26 @@ public class TaskService {
         return taskRepository.findAllBy(pageable).toList();
     }
 
-    public String saveUploadedFile(InputStream inputStream, String fileName, String mimeType) {
-        return fileName;
-    }
-
+    /**
+     * Sauvegarde ou met à jour une tâche.
+     */
+    @Transactional
     public void save(Task task) {
+        taskRepository.save(task);
     }
 
+    /**
+     * Méthode inutile actuellement – peut être supprimée ou convertie pour retourner toutes les tâches.
+     */
     public Task findAll() {
-        return null;
+        return null; // à corriger ou supprimer
+    }
+
+    /**
+     * Sauvegarde d'un fichier associé à une tâche (non implémentée ici).
+     */
+    public String saveUploadedFile(InputStream inputStream, String fileName, String mimeType) {
+        // à implémenter si nécessaire
+        return fileName;
     }
 }

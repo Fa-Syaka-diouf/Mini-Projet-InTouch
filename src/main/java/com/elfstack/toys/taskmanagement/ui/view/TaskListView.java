@@ -4,6 +4,7 @@ import com.elfstack.toys.base.ui.component.ViewToolbar;
 import com.elfstack.toys.taskmanagement.domain.Task;
 import com.elfstack.toys.taskmanagement.service.TaskService;
 import com.elfstack.toys.usermanagement.domain.KeycloakUserDto;
+import com.elfstack.toys.usermanagement.service.KeycloakUserService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -29,6 +30,8 @@ import java.time.format.FormatStyle;
 import java.util.Collection;
 import java.util.Optional;
 
+import static com.vaadin.flow.spring.data.VaadinSpringDataHelpers.toSpringPageRequest;
+
 @Route("task-list")
 @PageTitle("Task List")
 @Menu(order = 0, icon = "vaadin:clipboard-check", title = "Task List")
@@ -36,7 +39,7 @@ import java.util.Optional;
 public class TaskListView extends Main {
 
     private final TaskService taskService;
-//    private final KeycloakUserService keycloakUserService;
+    private final KeycloakUserService keycloakUserService;
 
     final TextField title;
     final TextArea description;
@@ -47,10 +50,9 @@ public class TaskListView extends Main {
     final Button createBtn;
     final Grid<Task> taskGrid;
 
-//    public TaskListView(TaskService taskService, KeycloakUserService keycloakUserService, Clock clock)
-    public TaskListView(TaskService taskService, Clock clock){
+    public TaskListView(TaskService taskService, KeycloakUserService keycloakUserService, Clock clock, KeycloakUserService keycloakUserService1){
         this.taskService = taskService;
-//        this.keycloakUserService = keycloakUserService;
+        this.keycloakUserService = keycloakUserService;
 
         title = new TextField();
         title.setPlaceholder("Libellé de la tâche");
@@ -111,17 +113,17 @@ public class TaskListView extends Main {
         var dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(getLocale());
 
         taskGrid = new Grid<>();
-//        taskGrid.setItems(query -> taskService.list(toSpringPageRequest(query)).stream());
+        taskGrid.setItems(query -> taskService.list(toSpringPageRequest(query)).stream());
         taskGrid.addColumn(Task::getTitle).setHeader("Libellé").setWidth("200px");
         taskGrid.addColumn(Task::getDescription).setHeader("Description").setWidth("300px");
-//        taskGrid.addColumn(task -> Optional.ofNullable(task.getDateLimite()).map(dateFormatter::format).orElse("Aucune"))
-//                .setHeader("Date limite").setWidth("150px");
+        taskGrid.addColumn(task -> Optional.of(task.getDueDate()).map(dateFormatter::format).orElse("Aucune"))
+                .setHeader("Date limite").setWidth("150px");
         taskGrid.addColumn(task -> Optional.of(task.getDueDate()).map(dateFormatter::format).orElse("Non définie"))
                 .setHeader("Date de fin").setWidth("150px");
         taskGrid.addColumn(task -> Optional.of(task.getResponsableId()).map(String::valueOf).orElse("Non assigné"))
                 .setHeader("Assigné à").setWidth("150px");
-//        taskGrid.addColumn(task -> Optional.of(task.getStatut()).map(Enum::name).orElse("Indéfini"))
-//                .setHeader("Statut").setWidth("120px");
+        taskGrid.addColumn(task -> Optional.of(task.getStatut()).map(Enum::name).orElse("Indéfini"))
+                .setHeader("Statut").setWidth("120px");
         taskGrid.addColumn(task -> dateTimeFormatter.format(task.getCreatedDate()))
                 .setHeader("Date de création").setWidth("180px");
         taskGrid.setSizeFull();
@@ -147,16 +149,16 @@ public class TaskListView extends Main {
         add(taskGrid);
     }
 
-//    private void loadUsers() {
-//        try {
-////            var users = keycloakUserService.getAllUsers();
-//            assigneeComboBox.setItems((Collection<KeycloakUserDto>) users);
-//        } catch (Exception e) {
-//            Notification.show("Erreur lors du chargement des utilisateurs: " + e.getMessage(),
-//                            5000, Notification.Position.BOTTOM_END)
-//                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
-//        }
-//    }
+    private void loadUsers() {
+        try {
+            var users = keycloakUserService.getAllUsers();
+            assigneeComboBox.setItems((Collection<KeycloakUserDto>) users);
+        } catch (Exception e) {
+            Notification.show("Erreur lors du chargement des utilisateurs: " + e.getMessage(),
+                            5000, Notification.Position.BOTTOM_END)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
 
     private void createTask() {
 
