@@ -29,6 +29,7 @@ public class KeycloakUserService {
         return users != null ? Arrays.asList(users) : List.of();
     }
 
+
     public List<String> getAllUsernames() {
         return getAllUsers().stream()
                 .map(KeycloakUserDto::getUsername)

@@ -26,9 +26,6 @@ public class TaskService {
         this.clock = clock;
     }
 
-    /**
-     * Crée une nouvelle tâche et la sauvegarde en base.
-     */
     @Transactional
     public void createTask(String title, String description, @Nullable LocalDate dueDate,
                            @Nullable String responsableId, @Nullable LocalDate endDate,
@@ -50,13 +47,11 @@ public class TaskService {
             task.setResponsableId(responsableId);
         }
 
-        String fullName = (responsableFirstName != null ? responsableFirstName : "") +
+        // Fix: utilise prénom + nom
+        String fullName = ((responsableFirstName != null) ? responsableFirstName : "") +
                 " " +
-                (responsableLastName != null ? responsableLastName : "");
+                ((responsableLastName != null) ? responsableLastName : "");
         task.setResponsableUsername(fullName.trim());
-
-        // Tu peux aussi stocker l'username complet si tu veux
-        task.setResponsableUsername(responsableLastName); // ou autre logique ici
 
         taskRepository.save(task);
     }
@@ -66,26 +61,17 @@ public class TaskService {
         return taskRepository.findAllBy(pageable).toList();
     }
 
-    /**
-     * Sauvegarde ou met à jour une tâche.
-     */
     @Transactional
     public void save(Task task) {
         taskRepository.save(task);
     }
 
-    /**
-     * Méthode inutile actuellement – peut être supprimée ou convertie pour retourner toutes les tâches.
-     */
-    public Task findAll() {
-        return null; // à corriger ou supprimer
+    // Correction : retourne toutes les tâches si besoin
+    public List<Task> findAll() {
+        return taskRepository.findAll();
     }
 
-    /**
-     * Sauvegarde d'un fichier associé à une tâche (non implémentée ici).
-     */
     public String saveUploadedFile(InputStream inputStream, String fileName, String mimeType) {
-        // à implémenter si nécessaire
         return fileName;
     }
 }

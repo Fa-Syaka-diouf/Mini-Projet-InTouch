@@ -32,7 +32,7 @@ import java.util.Optional;
 
 import static com.vaadin.flow.spring.data.VaadinSpringDataHelpers.toSpringPageRequest;
 
-@Route("task-list")
+
 @PageTitle("Task List")
 @Menu(order = 0, icon = "vaadin:clipboard-check", title = "Task List")
 @PermitAll
@@ -50,7 +50,7 @@ public class TaskListView extends Main {
     final Button createBtn;
     final Grid<Task> taskGrid;
 
-    public TaskListView(TaskService taskService, KeycloakUserService keycloakUserService, Clock clock, KeycloakUserService keycloakUserService1){
+    public TaskListView(TaskService taskService, KeycloakUserService keycloakUserService, Clock clock){
         this.taskService = taskService;
         this.keycloakUserService = keycloakUserService;
 
@@ -114,8 +114,10 @@ public class TaskListView extends Main {
 
         taskGrid = new Grid<>();
         taskGrid.setItems(query -> taskService.list(toSpringPageRequest(query)).stream());
-        taskGrid.addColumn(Task::getTitle).setHeader("Libellé").setWidth("200px");
-        taskGrid.addColumn(Task::getDescription).setHeader("Description").setWidth("300px");
+        taskGrid.addColumn(Task::getTitle)
+                .setHeader("Libellé").setWidth("200px");
+        taskGrid.addColumn(Task::getDescription)
+                .setHeader("Description").setWidth("300px");
         taskGrid.addColumn(task -> Optional.of(task.getDueDate()).map(dateFormatter::format).orElse("Aucune"))
                 .setHeader("Date limite").setWidth("150px");
         taskGrid.addColumn(task -> Optional.of(task.getDueDate()).map(dateFormatter::format).orElse("Non définie"))

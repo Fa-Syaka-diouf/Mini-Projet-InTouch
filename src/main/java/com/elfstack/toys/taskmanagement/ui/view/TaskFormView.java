@@ -7,7 +7,6 @@ import com.elfstack.toys.taskmanagement.domain.TaskStatus;
 import com.elfstack.toys.taskmanagement.service.TaskService;
 import com.elfstack.toys.usermanagement.service.KeycloakUserService;
 import com.vaadin.flow.component.button.Button;
-//import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
@@ -43,18 +42,11 @@ public class TaskFormView extends VerticalLayout {
     public TaskFormView(TaskService taskService, KeycloakUserService keycloakUserService, CalendarService calendarService)
     {
         this.form = new TaskForm(keycloakUserService, calendarService);
+//        form.initResponsibleUsers();
         this.taskService = taskService;
         this.keycloakUserService = keycloakUserService;
         this.calendarService = calendarService;
-
-        // Pays supportés
-//        countryBox.setItems("FR", "US", "DE", "SN");
         dueDateField.setReadOnly(true); // Empêche modification manuelle
-
-        // Quand un pays est sélectionné.
-//        countryBox.addValueChangeListener(event -> {
-//            String code = event.getValue();
-//        });
 
         addClassName("task-view");
         setSizeFull();

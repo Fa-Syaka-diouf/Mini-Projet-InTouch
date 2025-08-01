@@ -1,9 +1,8 @@
 package com.elfstack.toys.admin.service;
 
+import com.elfstack.toys.admin.domain.JourFerie;
 import com.elfstack.toys.admin.domain.JourFerieRepository;
 import org.springframework.stereotype.Service;
-
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -16,46 +15,28 @@ public class CalendarService {
         CalendarService.jourFerieRepository = jourFerieRepository;
     }
 
-    public static LocalDate calculateDueDate(LocalDate startDate, int slaDays, String paysCode) {
-        if (startDate == null || paysCode == null || slaDays <= 0) {
-            throw new IllegalArgumentException("Données invalides pour le calcul de la date limite");
-        }
+    public static LocalDate calculateDueDate(LocalDate start, int slaDays, String countryCode) {
+        LocalDate date = start;
+        int added = 0;
 
-        LocalDate currentDate = startDate;
-        int workingDaysAdded = 0;
+        List<LocalDate> joursFeries = jourFerieRepository
+                .findByPaysCodeAndDateDebutBetween(countryCode, start, start.plusYears(1))
+                .stream()
+                .map(JourFerie::getDateDebut) // ou adapter pour gérer les périodes dateDebut - dateFin
+                .toList();
 
-        // On boucle jusqu'à ajouter tous les jours ouvrés
-        while (workingDaysAdded < slaDays) {
-            currentDate = currentDate.plusDays(1);
-
-            // On saute les samedis et dimanches
-            if (currentDate.getDayOfWeek() == DayOfWeek.SATURDAY || currentDate.getDayOfWeek() == DayOfWeek.SUNDAY) {
-                continue;
+        while (added < slaDays) {
+            date = date.plusDays(1);
+            if (!isWeekend(date) && !joursFeries.contains(date)) {
+                added++;
             }
-
-            // Vérifie si c’est un jour férié dans ce pays
-//            boolean isFerie = jourFerieRepository.findByPaysCodeAndDateDebutBetween(
-//                    paysCode,
-//                    currentDate,
-//                    currentDate
-//            ).stream().findAny().isPresent();
-
-//            boolean isFerie = !jourFerieRepository.findByPaysCodeAndDateDebutBetween(
-//                    paysCode,
-//                    currentDate,
-//                    currentDate
-//            ).isEmpty();
-
-
-//            if (isFerie) {
-//                continue;
-//            }
-
-            // Si ni week-end ni jour férié, on compte ce jour comme ouvré
-            workingDaysAdded++;
         }
 
-        return currentDate;
+        return date;
+    }
+
+    private static boolean isWeekend(LocalDate date) {
+        return date.getDayOfWeek().getValue() >= 6;
     }
 
 
