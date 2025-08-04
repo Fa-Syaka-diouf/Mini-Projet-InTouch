@@ -23,7 +23,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
@@ -60,6 +60,9 @@ keycloak:
   auth-server-url: http://localhost:8081
   realm: ${MY_REALM}
   resource: ${KEYCLOAK_CLIENT_ID}
+  admin:
+    username: ${ADMIN_USERNAME}
+    password: ${ADMIN_PASSWORD}
   api:
     url: http://localhost:8080/auth/admin/realms/task-management/users
 
@@ -67,7 +70,6 @@ keycloak:
   admin-client:
     client-id: admin-cli
     client-secret: ${ADMIN_SECRET}
-
 # Configuration Google Calendar API
 google:
   calendar:

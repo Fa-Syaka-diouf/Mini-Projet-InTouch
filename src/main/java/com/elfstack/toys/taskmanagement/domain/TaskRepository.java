@@ -24,18 +24,18 @@ import java.util.List;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
-
-    // Recherche par titre
-    List<Task> findByTitleContainingIgnoreCase(String title);
-
-    // Recherche par pays
-    List<Task> findByCountry(String country);
-
-    // Recherche par statut
-    List<Task> findByStatus(TaskStatus status);
-
-    // Vérifier l'unicité du titre
-    boolean existsByTitleIgnoreCase(String title);
+//
+//    // Recherche par titre
+//    List<Task> findByTitleContainingIgnoreCase(String title);
+//
+//    // Recherche par pays
+//    List<Task> findByCountry(String country);
+//
+//    // Recherche par statut
+//    List<Task> findByStatus(TaskStatus status);
+//
+//    // Vérifier l'unicité du titre
+//    boolean existsByTitleIgnoreCase(String title);
 //
 //    // Tâches par priorité
 //    @Query("SELECT t FROM Task t WHERE t.priority = :priority ORDER BY t.createdDate DESC")

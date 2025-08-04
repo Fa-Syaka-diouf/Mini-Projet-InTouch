@@ -28,6 +28,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.spring.annotation.UIScope;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.stereotype.Component;
 
@@ -38,8 +39,8 @@ import java.util.List;
 import java.util.Locale;
 
 @PageTitle("Gestion des tâches")
-@Component
 @Route(value = "admin/task-management", layout = AdminLayout.class)
+@UIScope
 @RolesAllowed("ADMIN")
 public class TaskFormView extends VerticalLayout {
 
@@ -49,23 +50,23 @@ public class TaskFormView extends VerticalLayout {
     private final HolidaySyncService holidaySyncService;
 
     // Composants de la grille
-    private Grid<Task> grid = new Grid<>(Task.class, false);
-    private Button addTaskButton = new Button("Nouvelle tâche");
+    private final Grid<Task> grid = new Grid<>(Task.class, false);
+    private final Button addTaskButton = new Button("Nouvelle tâche");
 
     // Composants du formulaire
-    private Dialog formDialog = new Dialog();
-    private FormLayout formLayout = new FormLayout();
-    private TextField libelle = new TextField("Libellé (*)");
-    private ComboBox<StatutEnum> statut = new ComboBox<>("Statut (*)");
-    private TextArea description = new TextArea("Description (*)");
-    private IntegerField slaDays = new IntegerField("SLA (jours) *");
-    private ComboBox<String> paysDestinataire = new ComboBox<>("Pays destinataire (*)");
-    private DatePicker dateLimite = new DatePicker("Date limite calculée");
-    private ComboBox<TaskPriority> priority = new ComboBox<>("Priorité (*)");
-    private ComboBox<String> responsableUsername = new ComboBox<>("Responsable (*)");
-    private Button saveButton = new Button("Enregistrer");
-    private Button cancelButton = new Button("Annuler");
-    private Button deleteButton = new Button("Supprimer");
+    private final Dialog formDialog = new Dialog();
+    private final FormLayout formLayout = new FormLayout();
+    private final TextField libelle = new TextField("Libellé (*)");
+    private final ComboBox<StatutEnum> statut = new ComboBox<>("Statut (*)");
+    private final TextArea description = new TextArea("Description (*)");
+    private final IntegerField slaDays = new IntegerField("SLA (jours) *");
+    private final ComboBox<String> paysDestinataire = new ComboBox<>("Pays destinataire (*)");
+    private final DatePicker dateLimite = new DatePicker("Date limite calculée");
+    private final ComboBox<TaskPriority> priority = new ComboBox<>("Priorité (*)");
+    private final ComboBox<String> responsableUsername = new ComboBox<>("Responsable (*)");
+    private final Button saveButton = new Button("Enregistrer");
+    private final Button cancelButton = new Button("Annuler");
+    private final Button deleteButton = new Button("Supprimer");
 
     private final Binder<Task> binder = new BeanValidationBinder<>(Task.class);
     private Task currentTask;
@@ -122,6 +123,7 @@ public class TaskFormView extends VerticalLayout {
         })).setHeader("Priorité").setAutoWidth(true);
 
         grid.addColumn(Task::getDateLimite).setHeader("Date limite").setAutoWidth(true);
+        grid.addColumn(Task::getSlaDays).setHeader("Slay(en Jour)").setAutoWidth(true);
 
         // Gestion de la sélection
         grid.asSingleSelect().addValueChangeListener(event -> {
@@ -130,7 +132,11 @@ public class TaskFormView extends VerticalLayout {
 
         // Configuration du bouton d'ajout
         addTaskButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        addTaskButton.addClickListener(e -> openForm(new Task()));
+        addTaskButton.addClickListener(e -> {
+            this.currentTask = new Task();
+            openForm(currentTask);
+        });
+
     }
 
     private void configureForm() {
@@ -285,19 +291,20 @@ public class TaskFormView extends VerticalLayout {
     private void loadAvailableCountries() {
         try {
             List<String> countries = holidaySyncService.getAllCountries();
+            System.out.println(countries);
             if (countries != null && !countries.isEmpty()) {
                 paysDestinataire.setItems(countries);
             } else {
                 paysDestinataire.setItems("FR", "UK", "US", "DE", "ES", "IT");
                 paysDestinataire.setValue("FR");
-                Notification.show("Aucun pays configuré, utilisation des pays par défaut")
-                        .addThemeVariants(NotificationVariant.LUMO_WARNING);
+//                Notification.show("Aucun pays configuré, utilisation des pays par défaut")
+//                        .addThemeVariants(NotificationVariant.LUMO_WARNING);
             }
         } catch (Exception e) {
             paysDestinataire.setItems("FR", "UK", "US", "DE", "ES", "IT");
             paysDestinataire.setValue("FR");
-            Notification.show("Erreur lors du chargement des pays : " + e.getMessage())
-                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+//            Notification.show("Erreur lors du chargement des pays : " + e.getMessage())
+//                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 
@@ -307,8 +314,8 @@ public class TaskFormView extends VerticalLayout {
             responsableUsername.setItems(usernames);
         } catch (Exception e) {
             responsableUsername.setItems();
-            Notification.show("Erreur lors du chargement des utilisateurs")
-                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+//            Notification.show("Erreur lors du chargement des utilisateurs")
+//                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 
@@ -344,22 +351,21 @@ public class TaskFormView extends VerticalLayout {
 
     private void saveTask() {
         try {
-            if (binder.writeBeanIfValid(currentTask)) {
-                Task savedTask;
+            // Vérifier si currentTask est null
+            if (currentTask == null) {
+                Notification.show("Aucune tâche en cours d'édition")
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
 
-                if (currentTask.getId() == null) {
-                    // Nouvelle tâche - utiliser createTask ou save
-                    savedTask = taskService.save(currentTask);
-                } else {
-                    // Mise à jour d'une tâche existante
-                    savedTask = taskService.update(currentTask);
-                }
+            if (binder.writeBeanIfValid(currentTask)) {
+                boolean isNew = currentTask.getId() == null;
+                Task savedTask = isNew ? taskService.save(currentTask) : taskService.update(currentTask);
 
                 updateList();
                 closeForm();
 
-                String message = currentTask.getId() == null ?
-                        "Tâche créée avec succès !" : "Tâche mise à jour avec succès !";
+                String message = isNew ? "Tâche créée avec succès !" : "Tâche mise à jour avec succès !";
                 Notification.show(message)
                         .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             } else {
@@ -371,6 +377,7 @@ public class TaskFormView extends VerticalLayout {
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
+
 
     private void deleteTask() {
         if (currentTask != null && currentTask.getId() != null) {
