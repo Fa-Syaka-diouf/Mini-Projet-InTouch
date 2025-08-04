@@ -66,8 +66,8 @@ public class Task extends AbstractEntity<Long> {
 
     @Setter
     @Getter
-    @Column(name = "responsableUsername")
-    private String responsableUsername;
+    @Column(name = "responsableFullName")
+    private String responsableFullname;
 
 
     @Setter

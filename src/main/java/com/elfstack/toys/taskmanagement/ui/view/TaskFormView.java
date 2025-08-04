@@ -15,7 +15,12 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.grid.dataview.GridListDataView;
+import com.vaadin.flow.component.grid.editor.Editor;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -25,10 +30,13 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.UIScope;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.stereotype.Component;
 
@@ -49,11 +57,12 @@ public class TaskFormView extends VerticalLayout {
     private final KeycloakUserService keycloakUserService;
     private final HolidaySyncService holidaySyncService;
 
-    // Composants de la grille
     private final Grid<Task> grid = new Grid<>(Task.class, false);
     private final Button addTaskButton = new Button("Nouvelle tâche");
+    private TextField searchField;
+    private GridListDataView<Task> dataView;
+    private Editor<Task> editor;
 
-    // Composants du formulaire
     private final Dialog formDialog = new Dialog();
     private final FormLayout formLayout = new FormLayout();
     private final TextField libelle = new TextField("Libellé (*)");
@@ -83,60 +92,244 @@ public class TaskFormView extends VerticalLayout {
         addClassName("task-management-view");
         setSizeFull();
 
-        configureGrid();
+        setupUI();
         configureForm();
         configureDialog();
 
-        add(addTaskButton, grid);
         updateList();
         loadInitialData();
+        currentTask = null;
     }
 
-    private void configureGrid() {
-        grid.addClassNames("task-grid");
-        grid.setSizeFull();
-
-        grid.addColumn(Task::getLibelle).setHeader("Libellé").setAutoWidth(true);
-
-        grid.addColumn(new ComponentRenderer<>(task -> {
-            StatutEnum status = task.getStatut();
-            String label = status != null ? status.name() : "Inconnu";
-            String badgeVariant = getStatusBadgeVariant(status);
-
-            Span badgeSpan = new Span(label);
-            badgeSpan.getElement().getThemeList().add("badge " + badgeVariant);
-            return badgeSpan;
-        })).setHeader("Statut").setAutoWidth(true);
-
-        grid.addColumn(Task::getResponsableUsername).setHeader("Responsable").setAutoWidth(true);
-        grid.addColumn(Task::getPaysDestinataire).setHeader("Pays").setAutoWidth(true);
-
-        grid.addColumn(new ComponentRenderer<>(task -> {
-            TaskPriority taskPriority = task.getPriority();
-            if (taskPriority != null) {
-                Span priorityBadge = new Span(taskPriority.name());
-                String variant = getPriorityBadgeVariant(taskPriority);
-                priorityBadge.getElement().getThemeList().add("badge " + variant);
-                return priorityBadge;
-            }
-            return new Span("-");
-        })).setHeader("Priorité").setAutoWidth(true);
-
-        grid.addColumn(Task::getDateLimite).setHeader("Date limite").setAutoWidth(true);
-        grid.addColumn(Task::getSlaDays).setHeader("Slay(en Jour)").setAutoWidth(true);
-
-        // Gestion de la sélection
-        grid.asSingleSelect().addValueChangeListener(event -> {
-            openForm(event.getValue());
-        });
-
-        // Configuration du bouton d'ajout
+    private void setupUI() {
+        // Configuration du bouton "Nouvelle tâche"
         addTaskButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        addTaskButton.setIcon(VaadinIcon.PLUS.create());
         addTaskButton.addClickListener(e -> {
             this.currentTask = new Task();
             openForm(currentTask);
         });
 
+        // Configuration du champ de recherche
+        searchField = new TextField();
+        searchField.setWidth("50%");
+        searchField.setPlaceholder("Search");
+        searchField.setPrefixComponent(new Icon(VaadinIcon.SEARCH));
+        searchField.setValueChangeMode(ValueChangeMode.EAGER);
+
+        // Configuration de la grille
+        configureGrid();
+
+        // Configuration du layout de la barre d'outils
+        HorizontalLayout toolbarLayout = new HorizontalLayout(searchField, addTaskButton);
+        toolbarLayout.setAlignItems(HorizontalLayout.Alignment.END);
+        toolbarLayout.setWidthFull();
+
+        // Configuration du layout principal
+        VerticalLayout layout = new VerticalLayout(toolbarLayout, grid);
+        layout.setPadding(false);
+
+        addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX,
+                LumoUtility.Padding.MEDIUM, LumoUtility.Gap.SMALL);
+
+        add(layout);
+    }
+
+    private void configureGrid() {
+        grid.addClassNames("task-grid");
+        grid.setSizeFull();
+        grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        grid.setColumnReorderingAllowed(true);
+
+        // Configuration de l'éditeur
+        editor = grid.getEditor();
+        Binder<Task> gridBinder = new Binder<>(Task.class);
+        editor.setBinder(gridBinder);
+        editor.setBuffered(true);
+
+        setupGridColumns(gridBinder);
+        setupEditorEvents();
+
+        // Configuration des données avec filtre de recherche
+        dataView = grid.setItems();
+        setupSearchFilter();
+    }
+
+    private void setupGridColumns(Binder<Task> gridBinder) {
+        // Colonne Libellé
+        Grid.Column<Task> libelleColumn = grid.addColumn(Task::getLibelle)
+                .setHeader("Libellé")
+                .setSortable(true)
+                .setResizable(true)
+                .setAutoWidth(true);
+        TextField libelleField = new TextField();
+        libelleField.setWidthFull();
+        gridBinder.forField(libelleField)
+                .asRequired("Le libellé ne peut pas être vide")
+                .bind(Task::getLibelle, Task::setLibelle);
+        libelleColumn.setEditorComponent(libelleField);
+
+        // Colonne Statut
+        Grid.Column<Task> statutColumn = grid.addColumn(new ComponentRenderer<>(task -> {
+            StatutEnum status = task.getStatut();
+            String label = status.name();
+            String badgeVariant = getStatusBadgeVariant(status);
+
+            Span badgeSpan = new Span(label);
+            badgeSpan.getElement().getThemeList().add("badge " + badgeVariant);
+            return badgeSpan;
+        })).setHeader("Statut").setSortable(true).setAutoWidth(true).setResizable(true);
+        ComboBox<StatutEnum> statutField = new ComboBox<>();
+        statutField.setItems(StatutEnum.values());
+        statutField.setItemLabelGenerator(StatutEnum::name);
+        statutField.setWidthFull();
+        gridBinder.forField(statutField)
+                .asRequired("Le statut ne peut pas être vide")
+                .bind(Task::getStatut, Task::setStatut);
+        statutColumn.setEditorComponent(statutField);
+
+        // Colonne Responsable
+        Grid.Column<Task> responsableColumn = grid.addColumn(Task::getResponsableFullname)
+                .setHeader("Responsable")
+                .setSortable(true)
+                .setResizable(true)
+                .setAutoWidth(true);
+        ComboBox<String> responsableField = new ComboBox<>();
+        try {
+            List<String> usernames = keycloakUserService.getAllUsernames();
+            responsableField.setItems(usernames);
+        } catch (Exception e) {
+            responsableField.setItems();
+        }
+        responsableField.setWidthFull();
+        gridBinder.forField(responsableField)
+                .asRequired("Le responsable ne peut pas être vide")
+                .bind(Task::getResponsableFullname, Task::setResponsableFullname);
+        responsableColumn.setEditorComponent(responsableField);
+
+        // Colonne Pays
+        Grid.Column<Task> paysColumn = grid.addColumn(Task::getPaysDestinataire)
+                .setHeader("Pays")
+                .setSortable(true)
+                .setResizable(true)
+                .setAutoWidth(true);
+        ComboBox<String> paysField = new ComboBox<>();
+        try {
+            List<String> countries = holidaySyncService.getAllCountries();
+            paysField.setItems(countries);
+        } catch (Exception e) {
+            paysField.setItems("FR", "UK", "US", "DE", "ES", "IT");
+        }
+        paysField.setWidthFull();
+        gridBinder.forField(paysField)
+                .asRequired("Le pays ne peut pas être vide")
+                .bind(Task::getPaysDestinataire, Task::setPaysDestinataire);
+        paysColumn.setEditorComponent(paysField);
+
+        // Colonne Priorité
+        Grid.Column<Task> priorityColumn = grid.addColumn(new ComponentRenderer<>(task -> {
+            TaskPriority taskPriority = task.getPriority();
+            Span priorityBadge = new Span(taskPriority.name());
+            String variant = getPriorityBadgeVariant(taskPriority);
+            priorityBadge.getElement().getThemeList().add("badge " + variant);
+            return priorityBadge;
+        })).setHeader("Priorité").setSortable(true).setAutoWidth(true).setResizable(true);
+        ComboBox<TaskPriority> priorityField = new ComboBox<>();
+        priorityField.setItems(TaskPriority.values());
+        priorityField.setItemLabelGenerator(TaskPriority::name);
+        priorityField.setWidthFull();
+        gridBinder.forField(priorityField)
+                .asRequired("La priorité ne peut pas être vide")
+                .bind(Task::getPriority, Task::setPriority);
+        priorityColumn.setEditorComponent(priorityField);
+
+        // Colonne Date limite
+        Grid.Column<Task> dateLimiteColumn = grid.addColumn(Task::getDateLimite)
+                .setHeader("Date limite")
+                .setSortable(true)
+                .setResizable(true)
+                .setAutoWidth(true);
+
+        // Colonne SLA
+        Grid.Column<Task> slaColumn = grid.addColumn(Task::getSlaDays)
+                .setHeader("SLA (jours)")
+                .setSortable(true)
+                .setResizable(true)
+                .setAutoWidth(true);
+        IntegerField slaField = new IntegerField();
+        slaField.setMin(1);
+        slaField.setWidthFull();
+        gridBinder.forField(slaField)
+                .asRequired("Le SLA ne peut pas être vide")
+                .withValidator(val -> val != null && val >= 1, "Le SLA doit être au moins 1")
+                .withConverter(
+                        integer -> integer != null ? Long.valueOf(integer) : null,
+                        longValue -> longValue != null ? Math.toIntExact(longValue) : null
+                )
+                .bind(Task::getSlaDays, Task::setSlaDays);
+        slaColumn.setEditorComponent(slaField);
+
+        // Colonne d'édition
+        Grid.Column<Task> editColumn = grid.addComponentColumn(task -> {
+            Button editButton = new Button("Éditer");
+            editButton.addClickListener(e -> {
+                if (editor.isOpen())
+                    editor.cancel();
+                grid.getEditor().editItem(task);
+            });
+            return editButton;
+        }).setHeader("Actions").setResizable(true);
+
+        Button saveGridButton = new Button("Sauvegarder", e -> {
+            if (editor.save()) {
+                showSuccessNotification("Tâche sauvegardée avec succès !");
+            }
+        });
+        saveGridButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        Button cancelGridButton = new Button(VaadinIcon.CLOSE.create(), e -> editor.cancel());
+        cancelGridButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+
+        HorizontalLayout actions = new HorizontalLayout(saveGridButton, cancelGridButton);
+        actions.setPadding(false);
+        editColumn.setEditorComponent(actions);
+    }
+
+    private void setupEditorEvents() {
+        editor.addSaveListener(event -> {
+            try {
+                Task task = event.getItem();
+                Task savedTask = taskService.update(task);
+                updateList();
+                showSuccessNotification("Tâche mise à jour avec succès !");
+            } catch (Exception e) {
+                showErrorNotification("Erreur lors de la sauvegarde : " + e.getMessage());
+                editor.cancel();
+            }
+        });
+    }
+
+    private void setupSearchFilter() {
+        searchField.addValueChangeListener(e -> {
+            if (dataView != null) {
+                dataView.refreshAll();
+            }
+        });
+
+        dataView.addFilter(task -> {
+            String searchTerm = searchField.getValue();
+            if (searchTerm == null || searchTerm.trim().isEmpty()) {
+                return true;
+            }
+
+            searchTerm = searchTerm.trim().toLowerCase();
+            boolean matchesLibelle = task.getLibelle().toLowerCase().contains(searchTerm);
+            boolean matchesDescription = task.getDescription().toLowerCase().contains(searchTerm);
+            boolean matchesResponsable = task.getResponsableFullname().toLowerCase().contains(searchTerm);
+            boolean matchesPays = task.getPaysDestinataire().toLowerCase().contains(searchTerm);
+
+            return matchesLibelle || matchesDescription || matchesResponsable || matchesPays;
+        });
     }
 
     private void configureForm() {
@@ -147,50 +340,41 @@ public class TaskFormView extends VerticalLayout {
     }
 
     private void configureFormFields() {
-        // Configuration du libellé
         libelle.setPlaceholder("Titre de la tâche");
         libelle.setRequired(true);
 
-        // Configuration du statut
         statut.setItems(StatutEnum.values());
         statut.setItemLabelGenerator(StatutEnum::name);
         statut.setPlaceholder("Sélectionner un statut");
         statut.setValue(StatutEnum.A_FAIRE);
         statut.setRequired(true);
 
-        // Configuration de la description
         description.setPlaceholder("Description détaillée de la tâche");
         description.setHeight("120px");
         description.setMaxLength(Task.DESCRIPTION_MAX_LENGTH);
         description.setRequired(true);
 
-        // Configuration du SLA
         slaDays.setMin(1);
         slaDays.setStep(1);
         slaDays.setPlaceholder("Nombre de jours pour le SLA");
         slaDays.setRequiredIndicatorVisible(true);
 
-        // Configuration du pays
         paysDestinataire.setPlaceholder("Sélectionner un pays");
         paysDestinataire.setRequired(true);
 
-        // Configuration de la date limite
         dateLimite.setPlaceholder("jj/mm/aaaa");
         dateLimite.setLocale(Locale.FRANCE);
         dateLimite.setReadOnly(true);
 
-        // Configuration de la priorité
         priority.setItems(TaskPriority.values());
         priority.setItemLabelGenerator(TaskPriority::name);
         priority.setPlaceholder("Sélectionner une priorité");
         priority.setValue(TaskPriority.NORMALE);
         priority.setRequired(true);
 
-        // Configuration du responsable
         responsableUsername.setPlaceholder("Sélectionner un responsable");
         responsableUsername.setRequired(true);
 
-        // Listeners pour le calcul automatique de la date limite
         paysDestinataire.addValueChangeListener(e -> updateDueDate());
         slaDays.addValueChangeListener(e -> updateDueDate());
     }
@@ -232,7 +416,7 @@ public class TaskFormView extends VerticalLayout {
 
         binder.forField(responsableUsername)
                 .asRequired("Responsable obligatoire")
-                .bind(Task::getResponsableUsername, Task::setResponsableUsername);
+                .bind(Task::getResponsableFullname, Task::setResponsableFullname);
     }
 
     private void configureFormButtons() {
@@ -297,14 +481,10 @@ public class TaskFormView extends VerticalLayout {
             } else {
                 paysDestinataire.setItems("FR", "UK", "US", "DE", "ES", "IT");
                 paysDestinataire.setValue("FR");
-//                Notification.show("Aucun pays configuré, utilisation des pays par défaut")
-//                        .addThemeVariants(NotificationVariant.LUMO_WARNING);
             }
         } catch (Exception e) {
             paysDestinataire.setItems("FR", "UK", "US", "DE", "ES", "IT");
             paysDestinataire.setValue("FR");
-//            Notification.show("Erreur lors du chargement des pays : " + e.getMessage())
-//                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 
@@ -314,8 +494,6 @@ public class TaskFormView extends VerticalLayout {
             responsableUsername.setItems(usernames);
         } catch (Exception e) {
             responsableUsername.setItems();
-//            Notification.show("Erreur lors du chargement des utilisateurs")
-//                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 
@@ -323,19 +501,15 @@ public class TaskFormView extends VerticalLayout {
         this.currentTask = task;
 
         if (task.getId() == null) {
-            // Nouvelle tâche
             task.setCreationDate(Instant.now());
             task.setStatut(StatutEnum.A_FAIRE);
             task.setPriority(TaskPriority.NORMALE);
             deleteButton.setVisible(false);
         } else {
-            // Tâche existante
             deleteButton.setVisible(true);
         }
 
         binder.setBean(task);
-
-        // Calculer la date limite après avoir défini la tâche
         updateDueDate();
 
         formDialog.setHeaderTitle(task.getId() == null ? "Nouvelle tâche" : "Modifier la tâche : " + task.getLibelle());
@@ -344,23 +518,15 @@ public class TaskFormView extends VerticalLayout {
 
     private void closeForm() {
         formDialog.close();
-        grid.asSingleSelect().clear();
         currentTask = null;
         binder.setBean(null);
     }
 
     private void saveTask() {
         try {
-            // Vérifier si currentTask est null
-            if (currentTask == null) {
-                Notification.show("Aucune tâche en cours d'édition")
-                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
-                return;
-            }
-
             if (binder.writeBeanIfValid(currentTask)) {
                 boolean isNew = currentTask.getId() == null;
-                Task savedTask = isNew ? taskService.save(currentTask) : taskService.update(currentTask);
+                Task savedTask = isNew ? taskService.save(currentTask, responsableUsername.getValue()) : taskService.update(currentTask);
 
                 updateList();
                 closeForm();
@@ -378,9 +544,8 @@ public class TaskFormView extends VerticalLayout {
         }
     }
 
-
     private void deleteTask() {
-        if (currentTask != null && currentTask.getId() != null) {
+        if (currentTask.getId() != null) {
             try {
                 taskService.delete(currentTask.getId());
                 updateList();
@@ -396,18 +561,11 @@ public class TaskFormView extends VerticalLayout {
 
     private void updateDueDate() {
         try {
-            if (slaDays.getValue() != null && paysDestinataire.getValue() != null && currentTask != null) {
-                // Utiliser la date de création de la tâche si disponible
+            if (slaDays.getValue() != null) {
                 LocalDate startDate;
-                if (currentTask.getCreationDate() != null) {
-                    startDate = currentTask.getCreationDate().atZone(ZoneId.systemDefault()).toLocalDate();
-                } else {
-                    startDate = LocalDate.now();
-                }
+                startDate = currentTask.getCreationDate().atZone(ZoneId.systemDefault()).toLocalDate();
 
                 String countryCode = holidaySyncService.countryCodeSetup(paysDestinataire.getValue());
-
-                // Calculer la date limite
                 LocalDate computedDueDate = calendarService.calculateDueDate(
                         startDate,
                         slaDays.getValue(),
@@ -415,33 +573,28 @@ public class TaskFormView extends VerticalLayout {
                 );
 
                 dateLimite.setValue(computedDueDate);
-
-                // Mettre à jour la tâche
-                if (currentTask != null) {
-                    currentTask.setDateLimite(computedDueDate);
-                }
+                currentTask.setDateLimite(computedDueDate);
             } else {
-                // Nettoyer la date si les paramètres sont incomplets
                 dateLimite.clear();
-                if (currentTask != null) {
-                    currentTask.setDateLimite(null);
-                }
+                currentTask.setDateLimite(null);
             }
         } catch (Exception e) {
-            // Gestion d'erreur lors du calcul
             Notification.show("Erreur lors du calcul de la date limite : " + e.getMessage())
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
             dateLimite.clear();
-            if (currentTask != null) {
-                currentTask.setDateLimite(null);
-            }
+            currentTask.setDateLimite(null);
         }
     }
 
     private void updateList() {
         try {
             List<Task> tasks = taskService.findAll();
-            grid.setItems(tasks);
+            if (dataView != null) {
+                dataView = grid.setItems(tasks);
+                setupSearchFilter();
+            } else {
+                grid.setItems(tasks);
+            }
         } catch (Exception e) {
             Notification.show("Erreur lors du chargement des tâches : " + e.getMessage())
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -449,8 +602,6 @@ public class TaskFormView extends VerticalLayout {
     }
 
     private String getStatusBadgeVariant(StatutEnum status) {
-        if (status == null) return "contrast";
-
         return switch (status) {
             case A_FAIRE -> "contrast";
             case EN_COURS -> "primary";
@@ -461,8 +612,6 @@ public class TaskFormView extends VerticalLayout {
     }
 
     private String getPriorityBadgeVariant(TaskPriority priority) {
-        if (priority == null) return "contrast";
-
         return switch (priority) {
             case FAIBLE -> "success";
             case NORMALE -> "contrast";
@@ -470,5 +619,15 @@ public class TaskFormView extends VerticalLayout {
             case CRITIQUE -> "error";
             default -> "contrast";
         };
+    }
+
+    private void showSuccessNotification(String message) {
+        Notification notification = Notification.show(message, 3000, Notification.Position.TOP_CENTER);
+        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    }
+
+    private void showErrorNotification(String message) {
+        Notification notification = Notification.show(message, 5000, Notification.Position.TOP_CENTER);
+        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
     }
 }

@@ -52,7 +52,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     List<Task> findByStatut(StatutEnum statut);
 
-    List<Task> findByResponsableUsername(String username);
+    List<Task> findByResponsableFullname(String fullname);
 
     List<Task> findByPriority(TaskPriority priority);
 }

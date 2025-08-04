@@ -13,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -102,30 +103,78 @@ public class KeycloakUserService {
         }
     }
 
-    /**
-     * Récupère uniquement les noms d'utilisateur
-     */
     public List<String> getAllUsernames() {
         try {
             List<KeycloakUserDto> users = getAllUsers();
-            List<String> usernames = users.stream()
+            List<String> username = users.stream()
                     .filter(user -> user.getUsername() != null && !user.getUsername().trim().isEmpty())
                     .map(KeycloakUserDto::getUsername)
-                    .sorted() // Trier par ordre alphabétique
+                    .sorted()
                     .collect(Collectors.toList());
 
-            log.info("Récupéré {} noms d'utilisateur", usernames.size());
-            return usernames;
+            log.info("Récupéré {} noms d'utilisateur", username.size());
+            return username;
 
         } catch (Exception e) {
             log.error("Erreur lors de la récupération des noms d'utilisateur", e);
-            return Collections.emptyList(); // Retourner une liste vide plutôt que de lancer une exception
+            return Collections.emptyList();
+        }
+    }
+    /**
+     * Récupère l'ID d'un utilisateur à partir de son fullName
+     */
+    public String getUserIdByUserName(String username) {
+        if (username == null || username.trim().isEmpty()) {
+            log.warn("Le fullName fourni est vide ou null");
+            return null;
+        }
+
+        try {
+            List<KeycloakUserDto> users = getAllUsers();
+            Optional<KeycloakUserDto> user = users.stream()
+                    .filter(u -> u.getUsername() != null && u.getUsername().equalsIgnoreCase(username.trim()))
+                    .findFirst();
+
+            if (user.isPresent()) {
+                log.info("Utilisateur trouvé : {} avec ID {}", username, user.get().getId());
+                return user.get().getId();
+            } else {
+                log.warn("Aucun utilisateur trouvé avec le fullName : {}", username);
+                return null;
+            }
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération de l'ID de l'utilisateur avec fullName: {}", username, e);
+            return null;
+        }
+    }
+    public String getFullNameByUserName(String username) {
+        if (username == null || username.trim().isEmpty()) {
+            log.warn("Le fullName fourni est vide ou null");
+            return null;
+        }
+
+        try {
+            List<KeycloakUserDto> users = getAllUsers();
+            Optional<KeycloakUserDto> user = users.stream()
+                    .filter(u -> u.getUsername() != null && u.getUsername().equalsIgnoreCase(username.trim()))
+                    .findFirst();
+
+            if (user.isPresent()) {
+                log.info("Utilisateur trouvé : {} avec nom complet {}", username, user.get().getFullName());
+                return user.get().getFullName();
+            } else {
+                log.warn("Aucun utilisateur trouvé avec le fullName : {}", username);
+                return null;
+            }
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération de l'ID de l'utilisateur avec fullName: {}", username, e);
+            return null;
         }
     }
 
-    /**
-     * Récupère les utilisateurs actifs uniquement
-     */
+
     public List<KeycloakUserDto> getActiveUsers() {
         try {
             return getAllUsers().stream()
@@ -137,9 +186,6 @@ public class KeycloakUserService {
         }
     }
 
-    /**
-     * Récupère un utilisateur par son nom d'utilisateur
-     */
     public KeycloakUserDto getUserByUsername(String username) {
         if (username == null || username.trim().isEmpty()) {
             return null;

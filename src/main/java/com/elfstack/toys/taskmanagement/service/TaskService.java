@@ -4,6 +4,7 @@ import com.elfstack.toys.taskmanagement.domain.StatutEnum;
 import com.elfstack.toys.taskmanagement.domain.Task;
 import com.elfstack.toys.taskmanagement.domain.TaskPriority;
 import com.elfstack.toys.taskmanagement.domain.TaskRepository;
+import com.elfstack.toys.usermanagement.service.KeycloakUserService;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,15 +24,17 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final Clock clock;
+    private final KeycloakUserService keycloakUserService;
 
-    TaskService(TaskRepository taskRepository, Clock clock) {
+    TaskService(TaskRepository taskRepository, Clock clock, KeycloakUserService keycloakUserService) {
         this.taskRepository = taskRepository;
         this.clock = clock;
+        this.keycloakUserService = keycloakUserService;
     }
 
     @Transactional
     public Task createTask(String libelle, String description, @Nullable LocalDate dateLimite,
-                           @Nullable String responsableId, String responsableUsername,
+                           @Nullable String responsableId, String responsableFullname,
                            @Nullable String paysDestinataire, @Nullable Long slaDays,
                            @Nullable TaskPriority priority, StatutEnum statut) {
         if ("fail".equals(description)) {
@@ -43,7 +46,7 @@ public class TaskService {
         task.setDescription(description);
         task.setCreationDate(clock.instant());
         task.setResponsableId(responsableId);
-        task.setResponsableUsername(responsableUsername);
+        task.setResponsableFullname(responsableFullname);
         task.setPaysDestinataire(paysDestinataire);
         task.setSlaDays(slaDays);
         task.setPriority(priority != null ? priority : TaskPriority.NORMALE);
@@ -54,7 +57,7 @@ public class TaskService {
     }
 
     @Transactional
-    public Task save(Task task) {
+    public Task save(Task task, String username) {
         if (task == null) {
             throw new IllegalArgumentException("La tâche ne peut pas être null");
         }
@@ -63,7 +66,10 @@ public class TaskService {
         if (task.getId() == null && task.getCreationDate() == null) {
             task.setCreationDate(clock.instant());
         }
-
+        if (task.getResponsableId() == null && task.getResponsableFullname() == null) {
+            task.setResponsableId(keycloakUserService.getUserIdByUserName(username));
+            task.setResponsableFullname(keycloakUserService.getFullNameByUserName(username));
+        }
         // Valeurs par défaut si non définies
         if (task.getStatut() == null) {
             task.setStatut(StatutEnum.A_FAIRE);
@@ -116,8 +122,8 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public List<Task> findByResponsableUsername(String username) {
-        return taskRepository.findByResponsableUsername(username);
+    public List<Task> findByResponsableFullname(String fullname) {
+        return taskRepository.findByResponsableFullname(fullname);
     }
 
     @Transactional(readOnly = true)
