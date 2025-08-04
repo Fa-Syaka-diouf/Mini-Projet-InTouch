@@ -23,7 +23,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
@@ -49,7 +49,11 @@ spring:
       resource server:
         jwt:
           issuer-uri: ${ISSUER_URI}
-
+    # Désactiver OAuth2 temporairement
+    autoconfigure:
+      exclude:
+        - org.springframework.boot.autoconfigure.security.oauth2.OAuth2AutoConfiguration
+        - org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientAutoConfiguration
 
 # Configuration Keycloak
 keycloak:
@@ -59,12 +63,13 @@ keycloak:
   admin:
     username: ${ADMIN_USERNAME}
     password: ${ADMIN_PASSWORD}
+  api:
+    url: http://localhost:8080/auth/admin/realms/task-management/users
 
   # Configuration Admin Client pour accéder aux utilisateurs
   admin-client:
     client-id: admin-cli
     client-secret: ${ADMIN_SECRET}
-
 # Configuration Google Calendar API
 google:
   calendar:

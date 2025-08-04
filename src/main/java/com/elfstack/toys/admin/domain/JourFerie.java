@@ -12,13 +12,13 @@ import java.util.Date;
 
 @Getter
 @Entity
-@Table(name= "jourFerie", schema = "taskmanager_db" )
+@Table(name= "jour_ferie", schema = "taskmanager_db" )
 
 public class JourFerie{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "jourFerie_Id")
+    @Column(name = "jour_ferie_id")
     private Long id;
 
     @Getter
