@@ -35,6 +35,8 @@ public class Task extends AbstractEntity<Long> {
     private TaskStatus status = TaskStatus.NOUVEAU;
 
     @Lob
+    @Getter
+    @Setter
     @Column(name = "description")
     private String description;
 

@@ -20,7 +20,6 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.component.html.Span;
 
-import com.elfstack.toys.usermanagement.service.KeycloakUserService;
 import jakarta.annotation.security.PermitAll;
 
 import java.time.LocalDate;
@@ -37,22 +36,21 @@ import com.elfstack.toys.admin.service.CalendarService;
 @PermitAll
 public class TaskForm extends FormLayout {
     private final CalendarService calendarService;
-    private KeycloakUserService keycloakUserService = null;
+    private final KeycloakUserService keycloakUserService;
 
-    private TextField title = new TextField("Saisissez le libellé (*)");
-    private ComboBox<TaskStatus> status = new ComboBox<>("Statut d'avancement (*)");
-    private TextArea description = new TextArea("Saisissez la description (*)");
-    private IntegerField slaDays = new IntegerField("SLA (jours) *");
-    private ComboBox<String> country = new ComboBox<>("Sélectionnez un pays :");
-    private DatePicker dueDate = new DatePicker("La date limite correspondante calculée en fonction du SLA :");
-    private ComboBox<TaskPriority> priority = new ComboBox<>("Mettez la priorité (*)");
-    private Upload upload = new Upload();
+    private final TextField title = new TextField("Saisissez le libellé (*)");
+    private final ComboBox<TaskStatus> status = new ComboBox<>("Statut d'avancement (*)");
+    private final TextArea description = new TextArea("Saisissez la description (*)");
+    private final IntegerField slaDays = new IntegerField("SLA (jours) *");
+    private final ComboBox<String> country = new ComboBox<>("Sélectionnez un pays :");
+    private final DatePicker dueDate = new DatePicker("La date limite correspondante calculée en fonction du SLA :");
+    private final ComboBox<TaskPriority> priority = new ComboBox<>("Mettez la priorité (*)");
+    private final Upload upload = new Upload();
 
-    private Button save = new Button("Enregistrer");
-    private Button cancel = new Button("Annuler");
+    private final Button save = new Button("Enregistrer");
+    private final Button cancel = new Button("Annuler");
 
-    private Binder<Task> binder = new BeanValidationBinder<>(Task.class);
-
+    private final Binder<Task> binder = new BeanValidationBinder<>(Task.class);
 
     // Pour stocker temporairement le fichier uploadé
     private String currentUploadedFile;
@@ -62,22 +60,21 @@ public class TaskForm extends FormLayout {
 
     private ComboBox<String> responsible = new ComboBox<>("Responsable de la tâche");
 
-
     public TaskForm(KeycloakUserService keycloakUserService, CalendarService calendarService) {
-        this.calendarService=calendarService;
+        this.calendarService = calendarService;
         this.keycloakUserService = keycloakUserService;
-//        responsible.setItems(keycloakUserService.getAllUsernames());
+
         configureFields();
-        configureUpload();
+//        configureUpload();
         configureBinder();
         configureButtons();
 
-        // Quand on change le pays ou le SLA, recalculer
+        // ✅ CORRECTION: Gestion d'erreur lors du calcul de la date limite
         country.addValueChangeListener(e -> updateDueDate());
         slaDays.addValueChangeListener(e -> updateDueDate());
 
-        // Ajoute la liste de pays dans la comboBox
-        country.setItems(calendarService.getAvailableCountries());
+        // ✅ CORRECTION: Gestion d'erreur lors du chargement des pays
+        loadAvailableCountries();
 
         add(title, status, description, responsible, country, slaDays, dueDate, priority, upload,
                 new HorizontalLayout(save, cancel));
@@ -93,8 +90,6 @@ public class TaskForm extends FormLayout {
         binder.forField(responsible)
                 .asRequired("Responsable obligatoire")
                 .bind(Task::getResponsable, Task::setResponsable);
-
-
     }
 
     private void configureFields() {
@@ -102,42 +97,68 @@ public class TaskForm extends FormLayout {
         title.setPlaceholder("Titre de la tâche");
         title.setRequired(true);
 
-        // Configuration du ComboBox statut (remplace statusLink)
+        // Configuration du ComboBox statut
         status.setItems(TaskStatus.values());
         status.setItemLabelGenerator(TaskStatus::getDisplayName);
         status.setPlaceholder("Sélectionner un statut");
-        status.setValue(TaskStatus.NOUVEAU); // Valeur par défaut
+        status.setValue(TaskStatus.NOUVEAU);
         status.setRequired(true);
 
         slaDays.setMin(1);
         slaDays.setStep(1);
-//        slaDays.setHasControls(true);
         slaDays.setPlaceholder("Nombre de jours pour le SLA");
         slaDays.setRequiredIndicatorVisible(true);
 
         description.setPlaceholder("Description détaillée de la tâche");
         description.setHeight("120px");
 
-        // Configuration du ComboBox pays
-        country.setItems("FR", "UK", "US", "DE", "ES", "IT");
+        // ✅ CORRECTION: Configuration du ComboBox pays sera faite via loadAvailableCountries()
         country.setPlaceholder("Sélectionner un pays");
         country.setRequired(true);
-        country.setValue("FR");
 
         // Configuration du DatePicker
         dueDate.setPlaceholder("jj/mm/aaaa");
         dueDate.setLocale(Locale.FRANCE);
-        dueDate.setReadOnly(true); // Calculé automatiquement
+        dueDate.setReadOnly(true);
 
         // Configuration du ComboBox priorité
         priority.setItems(TaskPriority.values());
         priority.setItemLabelGenerator(TaskPriority::getDisplayName);
         priority.setPlaceholder("Sélectionner une priorité");
-        priority.setValue(TaskPriority.NORMALE); // Valeur par défaut
+        priority.setValue(TaskPriority.NORMALE);
 
         responsible.setPlaceholder("Sélectionner un responsable");
         responsible.setRequired(true);
+    }
 
+    /**
+     * ✅ AJOUT: Méthode pour charger les pays disponibles avec gestion d'erreur
+     */
+    private void loadAvailableCountries() {
+        try {
+            List<String> countries = calendarService.getAvailableCountries();
+            if (countries != null && !countries.isEmpty()) {
+                country.setItems(countries);
+                // Définir une valeur par défaut si disponible
+                if (countries.contains("FR")) {
+                    country.setValue("FR");
+                } else {
+                    country.setValue(countries.get(0));
+                }
+            } else {
+                // Fallback avec des pays par défaut
+                country.setItems("FR", "UK", "US", "DE", "ES", "IT");
+                country.setValue("FR");
+                Notification.show("Aucun pays configuré, utilisation des pays par défaut")
+                        .addThemeVariants(NotificationVariant.LUMO_WARNING);
+            }
+        } catch (Exception e) {
+            // Fallback en cas d'erreur
+            country.setItems("FR", "UK", "US", "DE", "ES", "IT");
+            country.setValue("FR");
+            Notification.show("Erreur lors du chargement des pays : " + e.getMessage())
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
     }
 
     public void initResponsibleUsers() {
@@ -145,7 +166,8 @@ public class TaskForm extends FormLayout {
             responsible.setItems(keycloakUserService.getAllUsernames());
         } catch (Exception e) {
             responsible.setItems();
-            Notification.show("Erreur lors du chargement des utilisateurs").addThemeVariants(NotificationVariant.LUMO_ERROR);
+            Notification.show("Erreur lors du chargement des utilisateurs")
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 
@@ -153,98 +175,79 @@ public class TaskForm extends FormLayout {
         return responsible;
     }
 
-    private void configureUpload() {
-        // Configuration moderne de l'upload avec Vaadin 24.8+
-        upload.setAutoUpload(true);
-        upload.setMaxFiles(1);
-        upload.setMaxFileSize(5 * 1024 * 1024); // 5MB max
-        upload.setAcceptedFileTypes("application/pdf", "image/*", ".doc", ".docx");
-
-        // Nouveau Receiver moderne
+//    private void configureUpload() {
+//        upload.setAutoUpload(true);
+//        upload.setMaxFiles(1);
+//        upload.setMaxFileSize(5 * 1024 * 1024);
+//        upload.setAcceptedFileTypes("application/pdf", "image/*", ".doc", ".docx");
+//
 //        upload.setReceiver(this::receiveUpload);
-
-        // Configuration des messages d'affichage
-        upload.getElement().setAttribute("drop-label", "Glissez votre fichier ici ou cliquez pour parcourir");
-        upload.getElement().setAttribute("drop-label-icon", "lumo:upload");
-        upload.getElement().setAttribute("max-file-size", "Taille maximum : 5MB");
-
-        // Utilisation des nouveaux événements clientside
-        upload.getElement().addEventListener("upload-success", event -> {
-            handleUploadSuccess();
-        });
-
-        upload.getElement().addEventListener("file-reject", event -> {
-            Notification.show("Fichier rejeté. Vérifiez le type et la taille (PDF, images, DOC, DOCX - max 5MB)")
-                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
-        });
-
-        upload.getElement().addEventListener("upload-error", event -> {
-            Notification.show("Erreur lors de l'upload du fichier")
-                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
-        });
-
-        // Ajouter un indicateur visuel
-        Span uploadInfo = new Span("Types acceptés : PDF, Images, DOC, DOCX (max 5MB)");
-        uploadInfo.getStyle().set("font-size", "0.8em");
-        uploadInfo.getStyle().set("color", "var(--lumo-secondary-text-color)");
-        add(uploadInfo);
-    }
-
-    /**
-     * Nouveau receiver compatible Vaadin 24.8+
-     */
-    private OutputStream receiveUpload(String filename, String mimeType) {
-        return new ByteArrayOutputStream() {
-            @Override
-            public void close() throws IOException {
-                super.close();
-
-                // Traitement asynchrone du fichier
-                byte[] fileData = toByteArray();
-                processUploadedFile(filename, mimeType, fileData);
-            }
-        };
-    }
+//
+//        upload.getElement().setAttribute("drop-label", "Glissez votre fichier ici ou cliquez pour parcourir");
+//        upload.getElement().setAttribute("drop-label-icon", "lumo:upload");
+//        upload.getElement().setAttribute("max-file-size", "Taille maximum : 5MB");
+//
+//        upload.getElement().addEventListener("upload-success", event -> {
+//            handleUploadSuccess();
+//        });
+//
+//        upload.getElement().addEventListener("file-reject", event -> {
+//            Notification.show("Fichier rejeté. Vérifiez le type et la taille (PDF, images, DOC, DOCX - max 5MB)")
+//                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+//        });
+//
+//        upload.getElement().addEventListener("upload-error", event -> {
+//            Notification.show("Erreur lors de l'upload du fichier")
+//                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+//        });
+//
+//        Span uploadInfo = new Span("Types acceptés : PDF, Images, DOC, DOCX (max 5MB)");
+//        uploadInfo.getStyle().set("font-size", "0.8em");
+//        uploadInfo.getStyle().set("color", "var(--lumo-secondary-text-color)");
+//        add(uploadInfo);
+//    }
+//    private OutputStream receiveUpload(String filename, String mimeType) {
+//        return new ByteArrayOutputStream() {
+//            @Override
+//            public void close() throws IOException {
+//                super.close();
+//                byte[] fileData = toByteArray();
+//                processUploadedFile(filename, mimeType, fileData);
+//            }
+//        };
+//    }
 
     public void setAvailableResponsibles(List<String> usernames) {
         responsible.setItems(usernames);
     }
 
-    /**
-     * Traite le fichier uploadé de manière asynchrone
-     */
-    private void processUploadedFile(String filename, String mimeType, byte[] fileData) {
-        try {
-            if (uploadCallback != null && fileData.length > 0) {
-                InputStream inputStream = new ByteArrayInputStream(fileData);
-                currentUploadedFile = uploadCallback.onFileUploaded(inputStream, filename, mimeType);
-
-                // Mettre à jour la tâche avec le nom du fichier
-                Task currentTask = getTask();
-                if (currentTask != null) {
-                    currentTask.setAttachmentFilename(currentUploadedFile);
-                }
-            }
-        } catch (Exception e) {
-            getUI().ifPresent(ui -> ui.access(() -> {
-                Notification.show("Erreur lors de la sauvegarde du fichier : " + e.getMessage())
-                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
-            }));
-        }
-    }
-
-    /**
-     * Gère le succès de l'upload
-     */
-    private void handleUploadSuccess() {
-        if (currentUploadedFile != null) {
-            Notification.show("Fichier uploadé et sauvegardé avec succès !")
-                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-        }
-    }
+//    private void processUploadedFile(String filename, String mimeType, byte[] fileData) {
+//        try {
+//            if (uploadCallback != null && fileData.length > 0) {
+//                InputStream inputStream = new ByteArrayInputStream(fileData);
+//                currentUploadedFile = uploadCallback.onFileUploaded(inputStream, filename, mimeType);
+//
+//                Task currentTask = getTask();
+//                if (currentTask != null) {
+//                    currentTask.setAttachmentFilename(currentUploadedFile);
+//                }
+//            }
+//        } catch (Exception e) {
+//            getUI().ifPresent(ui -> ui.access(() -> {
+//                Notification.show("Erreur lors de la sauvegarde du fichier : " + e.getMessage())
+//                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+//            }));
+//        }
+//    }
+//
+//    private void handleUploadSuccess() {
+//        if (currentUploadedFile != null) {
+//            Notification.show("Fichier uploadé et sauvegardé avec succès !")
+//                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+//        }
+//    }
 
     private void configureBinder() {
-        // Binding automatique des champs avec validation
         binder.forField(title)
                 .asRequired("Le titre est obligatoire")
                 .withValidator(t -> t.length() >= 3, "Le titre doit contenir au moins 3 caractères")
@@ -271,38 +274,37 @@ public class TaskForm extends FormLayout {
                 .asRequired("Le SLA est obligatoire")
                 .withValidator(val -> val != null && val >= 1, "Le SLA doit être au moins 1")
                 .bind(Task::getSlaDays, Task::setSlaDays);
-
     }
 
     private void configureButtons() {
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-
-        // Styles responsives
         save.getStyle().set("margin-right", "var(--lumo-space-s)");
     }
+
     private Task task;
+
     public void setTask(Task task) {
-        if(task == null){
+        if (task == null) {
             clear();
             return;
         }
-        this.task=task;
+        this.task = task;
         binder.setBean(task);
         currentUploadedFile = null;
 
-        // Réinitialiser l'upload si nouvelle tâche
+        // ✅ CORRECTION: Logique corrigée pour l'initialisation de l'upload
         if (task.getId() == null) {
             upload.clearFileList();
             upload.getElement().setProperty("files", "");
         }
-    else {
-        binder.setBean(new Task()); // au pire, pour que ça ne casse pas
-    }
+        // ✅ CORRECTION: Suppression du else qui n'avait pas de sens
+
+        // ✅ AJOUT: Recalculer la date limite après avoir défini la tâche
+        updateDueDate();
     }
 
     public Task getTask() {
-//        return binder.getBean();
         return this.task;
     }
 
@@ -318,44 +320,85 @@ public class TaskForm extends FormLayout {
         return cancel;
     }
 
-    // Setter pour le callback d'upload
     public void setUploadCallback(UploadCallback callback) {
         this.uploadCallback = callback;
     }
 
     /**
-    /*
-     * Nettoie les ressources (optionnel)
+     * Nettoie les ressources
      */
     public void cleanup() {
         if (currentUploadedFile != null) {
-            // Optionnel : nettoyer les fichiers temporaires
             currentUploadedFile = null;
         }
     }
 
-    // Interface pour gérer l'upload
     @FunctionalInterface
     public interface UploadCallback {
         String onFileUploaded(InputStream inputStream, String fileName, String mimeType) throws Exception;
     }
 
     public void clear() {
-        this.task = new Task(); // ou null, selon logique, mais préférable d’avoir un Task vide
+        this.task = new Task();
         binder.setBean(task);
         currentUploadedFile = null;
         upload.clearFileList();
         upload.getElement().setProperty("files", "");
+        // ✅ AJOUT: Nettoyer aussi la date limite
+        dueDate.clear();
     }
 
+    /**
+     * ✅ CORRECTION MAJEURE: Calcul de la date limite avec gestion d'erreur
+     */
     private void updateDueDate() {
-        if (slaDays.getValue() != null && country.getValue() != null) {
-            LocalDate startDate = LocalDate.now(); // ou date de création réelle
-            String countryCode = country.getValue();
+        try {
+            if (slaDays.getValue() != null && country.getValue() != null) {
+                // ✅ CORRECTION: Utiliser la date de création de la tâche si disponible
+                LocalDate startDate;
+                if (task != null && task.getCreatedDate() != null) {
+                    startDate = task.getCreatedDate();
+                } else {
+                    startDate = LocalDate.now();
+                }
 
-            LocalDate computedDueDate = CalendarService.calculateDueDate(startDate, slaDays.getValue(), countryCode);
-            dueDate.setValue(computedDueDate);
+                String countryCode = country.getValue();
+
+                // ✅ CORRECTION: Appel de méthode non-static
+                LocalDate computedDueDate = calendarService.calculateDueDate(
+                        startDate,
+                        slaDays.getValue(),
+                        countryCode
+                );
+
+                dueDate.setValue(computedDueDate);
+
+                // ✅ AJOUT: Mettre à jour la tâche si elle existe
+                if (task != null) {
+                    task.setDueDate(computedDueDate);
+                }
+            } else {
+                // ✅ AJOUT: Nettoyer la date si les paramètres sont incomplets
+                dueDate.clear();
+                if (task != null) {
+                    task.setDueDate(null);
+                }
+            }
+        } catch (Exception e) {
+            // ✅ AJOUT: Gestion d'erreur lors du calcul
+            Notification.show("Erreur lors du calcul de la date limite : " + e.getMessage())
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            dueDate.clear();
+            if (task != null) {
+                task.setDueDate(null);
+            }
         }
     }
 
+    /**
+     * ✅ AJOUT: Méthode pour forcer le recalcul de la date limite
+     */
+    public void recalculateDueDate() {
+        updateDueDate();
+    }
 }
