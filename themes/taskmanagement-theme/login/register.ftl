@@ -1,4 +1,5 @@
 <#import "template.ftl" as layout>
+<link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/register.css">
 <@layout.registrationLayout displayMessage=!messagesPerField.existsError('firstName','lastName','email','username','password','password-confirm') displayInfo=realm.password && realm.registrationAllowed && !registrationDisabled??; section>
     <#if section = "header">
         ${msg("registerTitle")}

@@ -1,0 +1,21 @@
+Réinitialisation de votre authentification OTP
+
+Bonjour ${user.firstName!} ${user.lastName!},
+
+Vous avez demandé la réinitialisation de votre authentification à deux facteurs (OTP).
+
+Cliquez sur le lien suivant pour configurer un nouveau code OTP :
+${link}
+
+⚠️ IMPORTANT : Ce lien est valide pendant 5 minutes seulement.
+
+Que va-t-il se passer ?
+- Vos anciens codes OTP seront supprimés
+- Vous pourrez scanner un nouveau QR code
+- Vous devrez configurer votre application d'authentification
+
+Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.
+
+---
+Cet email a été envoyé par ${realmName}
+Pour des raisons de sécurité, ne partagez jamais ce lien.

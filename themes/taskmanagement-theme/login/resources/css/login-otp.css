@@ -1,0 +1,421 @@
+/* Reset and base styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #f7fafc;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body > div {
+    width: 100vw;
+    height: 100vh;
+}
+
+body > div > div:nth-child(2) {
+    width: 100%;
+    height: 100%;
+}
+
+header, #kc-header {
+    display: none;
+}
+
+#kc-content-wrapper {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#kc-content {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+#kc-form {
+    width: 100%;
+    height: 100vh;
+    background: white;
+    border-radius: 0;
+    box-shadow: none;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.login-container {
+    width: 100%;
+    height: 100vh;
+    background: #F4F7FA;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+}
+
+/* Left side - Illustration */
+.login-illustration {
+    background: #F4F7FA;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    height: 100vh;
+}
+
+.login-illustration > img {
+    width: min(350px, 80%);
+    height: auto;
+    max-height: 60vh;
+    object-fit: contain;
+}
+
+/* Right side - OTP Form */
+.login-form-section {
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    padding: 3rem;
+    margin: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-sizing: border-box;
+    height: calc(100vh - 3rem);
+    overflow-y: auto;
+}
+
+.login-header {
+    padding: 0 1rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logo-text {
+    width: min(150px, 80%);
+    height: auto;
+}
+
+.logo-img {
+    width: min(70px, 60px);
+    height: auto;
+}
+
+.login-header > div:first-child {
+    align-items: flex-start;
+}
+
+/* OTP Info Section */
+.otp-info {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+}
+
+.otp-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #243163;
+    margin-bottom: 0.5rem;
+}
+
+.otp-description {
+    font-size: 0.95rem;
+    color: #718096;
+    line-height: 1.5;
+}
+
+/* Form styles */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    flex: 1;
+    min-height: 0;
+    justify-content: center;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #2d3748;
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.form-input {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    min-height: 44px;
+}
+
+.form-input:focus {
+    outline: none;
+    border: 2px solid transparent;
+    background: linear-gradient(white, white) padding-box,
+    linear-gradient(45deg, #243163, #A51B3D, #243163) border-box;
+    animation: borderRotate 3s linear infinite;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+/* OTP Input specific styling */
+.otp-input {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.5rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    padding: 1rem;
+    max-width: 200px;
+    margin: 0 auto;
+}
+
+.otp-input::placeholder {
+    color: #cbd5e0;
+    letter-spacing: 0.3rem;
+}
+
+/* Animation de rotation du gradient */
+@keyframes borderRotate {
+    0% {
+        background: linear-gradient(white, white) padding-box,
+        linear-gradient(0deg, #243163, #A51B3D, #243163) border-box;
+    }
+    25% {
+        background: linear-gradient(white, white) padding-box,
+        linear-gradient(90deg, #243163, #A51B3D, #243163) border-box;
+    }
+    50% {
+        background: linear-gradient(white, white) padding-box,
+        linear-gradient(180deg, #243163, #A51B3D, #243163) border-box;
+    }
+    75% {
+        background: linear-gradient(white, white) padding-box,
+        linear-gradient(270deg, #243163, #A51B3D, #243163) border-box;
+    }
+    100% {
+        background: linear-gradient(white, white) padding-box,
+        linear-gradient(360deg, #243163, #A51B3D, #243163) border-box;
+    }
+}
+
+.login-button {
+    background: #243163;
+    color: white;
+    border: none;
+    padding: 0.875rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 0.5rem;
+    min-height: 44px;
+    animation: colorPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes colorPulse {
+    0% {
+        background: #243163;
+        box-shadow: 0 0 0 0 rgba(36, 49, 99, 0.4);
+    }
+    100% {
+        background: #A51B3D;
+        box-shadow: 0 0 0 8px rgba(165, 27, 61, 0);
+    }
+}
+
+.login-button:hover {
+    transform: translateY(-1px);
+    animation-duration: 1s;
+}
+
+.login-button:active {
+    transform: translateY(0);
+}
+
+.back-to-login {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.back-link {
+    color: #718096;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s ease;
+}
+
+.back-link:hover {
+    color: #e53e3e;
+    text-decoration: underline;
+}
+
+.error-message {
+    color: #e53e3e;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    text-align: center;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .login-container {
+        grid-template-columns: 1fr;
+    }
+
+    .login-illustration {
+        display: none;
+    }
+
+    .login-form-section {
+        padding: 1.5rem;
+        margin: 1rem;
+        height: calc(100vh - 2rem);
+    }
+
+    .login-header {
+        padding: 0 0 1.5rem;
+        gap: 1.5rem;
+    }
+
+    .otp-info {
+        margin-bottom: 1.5rem;
+    }
+
+    .otp-title {
+        font-size: 1.3rem;
+    }
+
+    form {
+        gap: 1.2rem;
+    }
+}
+
+@media (max-height: 600px) {
+    .login-form-section {
+        padding: 1rem;
+        margin: 1rem;
+    }
+
+    .login-header {
+        padding: 0 0 1rem;
+        gap: 1rem;
+    }
+
+    .otp-info {
+        margin-bottom: 1rem;
+    }
+
+    .otp-title {
+        font-size: 1.2rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .otp-description {
+        font-size: 0.85rem;
+    }
+
+    form {
+        gap: 1rem;
+    }
+
+    .form-input {
+        padding: 0.6rem 1rem;
+    }
+
+    .otp-input {
+        padding: 0.8rem;
+        font-size: 1.3rem;
+    }
+
+    .login-button {
+        padding: 0.7rem 2rem;
+    }
+}
+
+@media (max-height: 500px) {
+    .login-illustration > img {
+        max-height: 40vh;
+    }
+
+    .logo-text {
+        width: min(120px, 70%);
+    }
+
+    .logo-img {
+        width: min(50px, 40px);
+    }
+
+    .login-header {
+        gap: 0.8rem;
+    }
+
+    .otp-info {
+        margin-bottom: 0.8rem;
+    }
+
+    .otp-title {
+        font-size: 1.1rem;
+    }
+
+    .otp-description {
+        font-size: 0.8rem;
+    }
+
+    form {
+        gap: 0.8rem;
+    }
+}
+
+/* Hide default Keycloak elements */
+#kc-header,
+#kc-header-wrapper,
+.login-pf-page .login-pf-brand {
+    display: none !important;
+}
+
+.login-pf-page {
+    background: #f7fafc;
+}
+
+.card-pf {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
