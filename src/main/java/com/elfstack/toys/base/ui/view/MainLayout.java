@@ -1,7 +1,7 @@
 package com.elfstack.toys.base.ui.view;
 
 import com.elfstack.toys.admin.service.HolidaySyncService;
-import com.elfstack.toys.admin.ui.AdminJourFerie;
+//import com.elfstack.toys.admin.ui.AdminJourFerie;
 import com.elfstack.toys.admin.ui.AdminPage;
 import com.elfstack.toys.security.CurrentUser;
 import com.elfstack.toys.security.dev.DevLogoutView;

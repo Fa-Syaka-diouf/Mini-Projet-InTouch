@@ -82,7 +82,7 @@ public class AdminLayout extends AppLayout implements RouterLayout {
         var nav = new SideNav();
         nav.getStyle().set("margin-top", "1rem");
         SideNavItem dashboard = new SideNavItem("Tableau de bord", AdminPage.class, new Icon(VaadinIcon.HOME));
-        SideNavItem holiday = new SideNavItem("Jours Fériés", AdminJourFerie.class, new Icon(VaadinIcon.CALENDAR));
+        SideNavItem holiday = new SideNavItem("Jours Fériés", TaskFormView.class, new Icon(VaadinIcon.CALENDAR));
         SideNavItem Utilisateurs = new SideNavItem("Gestion des Utilisateurs", UserManagement.class, new Icon(VaadinIcon.USERS));
         SideNavItem Task_list = new SideNavItem("Liste des taches", TaskFormView.class, new Icon(VaadinIcon.CLIPBOARD_CHECK));
         SideNavItem Base_donne_holiday = new SideNavItem("Paramètre", AdminSettings.class, new Icon(VaadinIcon.COG));
