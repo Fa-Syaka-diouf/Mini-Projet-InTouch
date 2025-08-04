@@ -74,4 +74,8 @@ public class TaskService {
     public String saveUploadedFile(InputStream inputStream, String fileName, String mimeType) {
         return fileName;
     }
+
+    public void delete(Task task) {
+        taskRepository.delete(task);
+    }
 }

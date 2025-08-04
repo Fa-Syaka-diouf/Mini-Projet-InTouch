@@ -2,6 +2,7 @@ package com.elfstack.toys.taskmanagement.ui.view;
 
 import com.elfstack.toys.admin.service.CalendarService;
 import com.elfstack.toys.taskmanagement.domain.*;
+import com.elfstack.toys.usermanagement.domain.KeycloakUserDto;
 import com.elfstack.toys.usermanagement.service.KeycloakUserService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -23,6 +24,7 @@ import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import java.io.*;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -208,19 +210,90 @@ public class TaskForm extends FormLayout {
     public void setUploadCallback(UploadCallback callback) {
         this.uploadCallback = callback;
     }
-
     public void initResponsibleUsers() {
         try {
+            System.out.println("=== DÉBUT DEBUG INIT RESPONSIBLES ===");
+
+            // 1. Vérifier que le service Keycloak existe
+            if (keycloakUserService == null) {
+                System.err.println("KeycloakUserService est null !");
+                responsible.setItems("admin", "user"); // Fallback
+                return;
+            }
+
+            // 2. Tester d'abord la récupération complète des utilisateurs
+            System.out.println("Tentative de récupération des utilisateurs complets...");
+            List<KeycloakUserDto> allUsers = keycloakUserService.getAllUsers();
+            System.out.println("Utilisateurs complets récupérés: " + allUsers.size());
+
+            if (!allUsers.isEmpty()) {
+                System.out.println("Premier utilisateur: " + allUsers.get(0));
+            }
+
+            // 3. Maintenant récupérer les usernames
+            System.out.println("Tentative de récupération des usernames...");
             List<String> usernames = keycloakUserService.getAllUsernames();
-//            if (usernames.isEmpty()) {
-//                Notification.show("Aucun utilisateur récupéré").addThemeVariants(NotificationVariant.LUMO_WARNING);
-//            }
-            responsible.setItems(usernames);
+            System.out.println("Usernames récupérés: " + usernames.size());
+            System.out.println("Liste des usernames: " + usernames);
+
+            if (usernames.isEmpty()) {
+                System.out.println("Liste vide - ajout d'utilisateurs de test");
+                // Fallback avec des utilisateurs de test
+                responsible.setItems("admin", "john.doe", "jane.smith");
+
+                // Notification pour informer l'utilisateur
+                Notification notification = Notification.show(
+                        "Impossible de charger les utilisateurs Keycloak. Utilisateurs de test affichés.",
+                        3000,
+                        Notification.Position.TOP_CENTER
+                );
+                notification.addThemeVariants(NotificationVariant.LUMO_WARNING);
+            } else {
+                // Succès - utiliser les vrais utilisateurs
+                System.out.println("Chargement des utilisateurs réels dans le ComboBox");
+                responsible.setItems(usernames);
+
+                // Notification de succès (optionnelle, peut être supprimée)
+                System.out.println("Utilisateurs Keycloak chargés avec succès: " + usernames.size());
+            }
+
+            System.out.println("=== FIN DEBUG INIT RESPONSIBLES ===");
+
         } catch (Exception e) {
-            responsible.setItems();
+            System.err.println("ERREUR dans initResponsibleUsers: " + e.getMessage());
+            e.printStackTrace();
+
+            // En cas d'erreur, utiliser des utilisateurs de fallback
+            responsible.setItems("admin", "fallback-user");
+
+            // Afficher l'erreur à l'utilisateur
             Notification.show("Erreur chargement utilisateurs : " + e.getMessage())
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
+    }
+
+    // Méthode utilitaire pour recharger les utilisateurs manuellement
+    public void reloadResponsibleUsers() {
+        getUI().ifPresent(ui -> ui.access(() -> {
+            initResponsibleUsers();
+        }));
+    }
+
+    // Méthode pour forcer l'utilisation d'utilisateurs de test
+    public void useTestUsers() {
+        List<String> testUsers = Arrays.asList(
+                "admin",
+                "john.doe",
+                "jane.smith",
+                "bob.wilson",
+                "alice.johnson"
+        );
+
+        responsible.setItems(testUsers);
+        responsible.setValue("admin"); // Valeur par défaut
+
+        Notification.show("Utilisation d'utilisateurs de test")
+                .addThemeVariants(NotificationVariant.LUMO_CONTRAST);
     }
 
 

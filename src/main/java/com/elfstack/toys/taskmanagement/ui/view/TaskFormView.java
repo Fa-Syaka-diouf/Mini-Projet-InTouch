@@ -17,11 +17,11 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 
 @PageTitle("Créer une tâche")
 @Component
@@ -39,10 +39,12 @@ public class TaskFormView extends VerticalLayout {
     private Grid<Task> grid = new Grid<>(Task.class);
     private Dialog formDialog = new Dialog();
 
+    // Variable pour s'assurer que l'initialisation ne se fait qu'une fois
+    private boolean initialized = false;
+
     public TaskFormView(TaskService taskService, KeycloakUserService keycloakUserService, CalendarService calendarService)
     {
         this.form = new TaskForm(keycloakUserService, calendarService);
-//        form.initResponsibleUsers();
         this.taskService = taskService;
         this.keycloakUserService = keycloakUserService;
         this.calendarService = calendarService;
@@ -60,6 +62,39 @@ public class TaskFormView extends VerticalLayout {
 
         add(addTaskButton, grid);
         updateList();
+    }
+
+    @PostConstruct
+    private void init() {
+        // Déférer l'initialisation à la prochaine exécution de l'UI
+        getUI().ifPresent(ui -> {
+            ui.access(() -> {
+                if (!initialized) {
+                    try {
+                        form.initResponsibleUsers();
+                        initialized = true;
+                    } catch (Exception e) {
+                        // Log l'erreur mais ne fait pas planter l'application
+                        System.err.println("Erreur lors de l'initialisation des utilisateurs responsables: " + e.getMessage());
+                    }
+                }
+            });
+        });
+    }
+
+    // Alternative : initialisation lors du premier usage
+    private void ensureFormInitialized() {
+        if (!initialized && getUI().isPresent()) {
+            try {
+                form.initResponsibleUsers();
+                initialized = true;
+            } catch (Exception e) {
+                System.err.println("Erreur lors de l'initialisation des utilisateurs responsables: " + e.getMessage());
+                // Optionnel : afficher une notification à l'utilisateur
+                Notification.show("Attention: Impossible de charger la liste des utilisateurs")
+                        .addThemeVariants(NotificationVariant.LUMO_WARNING);
+            }
+        }
     }
 
     private void configureGrid() {
@@ -116,12 +151,9 @@ public class TaskFormView extends VerticalLayout {
                 form.setTask(null);  // Réinitialise le formulaire
             }
         });
-
     }
 
-    //    private ComboBox<String> countryBox = new ComboBox<>("Pays");
     private DatePicker dueDateField = new DatePicker("Date limite");
-
 
     private void configureForm() {
         form.setWidth("500px");
@@ -147,20 +179,23 @@ public class TaskFormView extends VerticalLayout {
     }
 
     private void openForm(Task task) {
+        // S'assurer que le formulaire est initialisé avant de l'ouvrir
+        ensureFormInitialized();
+
         form.setTask(task);
         formDialog.setHeaderTitle(task.getId() == null ? "Nouvelle tâche" : "Modifier la tâche : " + task.getTitle());
         formDialog.open();
     }
+
     private Task task;
+
     private void closeForm() {
         formDialog.close();
-//        form.setTask(null);
         if (task != null) {
             form.setTask(task);
         } else {
             Notification.show("Erreur : tâche introuvable").addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
-
         grid.asSingleSelect().clear();
     }
 
@@ -176,7 +211,6 @@ public class TaskFormView extends VerticalLayout {
                     return;
                 }
                 task.setDueDate(dueDateField.getValue());
-//                task.setCountry(countryBox.getValue());
                 taskService.save(task);
 
                 updateList();

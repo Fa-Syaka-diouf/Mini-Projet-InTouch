@@ -102,4 +102,10 @@ public class Task extends AbstractEntity<Long> {
     public void calculateDueDate() {
         this.dueDate = createdDate.plusDays(slaDays);
     }
+
+    public String getResponsableFullName() {
+        // Retourne le nom à partir d’un champ `responsableUsername` ou similaire
+        return responsableUsername; // à adapter selon ta logique
+    }
+
 }
