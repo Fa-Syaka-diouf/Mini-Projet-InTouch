@@ -14,6 +14,19 @@ vaadin:
 
 
 spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: dfasyaka@gmail.com
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
   config:
     import: optional:file:.env[.properties]
   datasource:

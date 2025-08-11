@@ -13,9 +13,9 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
                 .allowedOrigins(
-                        "http://localhost:8081",           // Keycloak
-                        "http://localhost:8080",           // Votre app
+                        "http://localhost:8081",           // Keycloak - IMPORTANT
                         "http://127.0.0.1:8081",
+                        "http://localhost:8080",
                         "http://127.0.0.1:8080"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")

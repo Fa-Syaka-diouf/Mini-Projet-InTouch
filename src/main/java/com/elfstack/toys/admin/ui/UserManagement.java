@@ -1,5 +1,6 @@
 package com.elfstack.toys.admin.ui;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.router.Route;
@@ -10,7 +11,7 @@ import jakarta.annotation.security.RolesAllowed;
 @RolesAllowed("ADMIN")
 public class UserManagement extends Main {
     UserManagement(){
-        addClassName(LumoUtility.Padding.MEDIUM);
-        add(new Div("User management"));
+        String keycloakUrl = "http://localhost:8081/admin/master/console/#/task-management/users";
+        UI.getCurrent().getPage().setLocation(keycloakUrl);
     }
 }

@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,25 +58,15 @@ public class TaskService {
     }
 
     @Transactional
-    public Task save(Task task, String username) {
+    public Task save(Task task) {
         if (task == null) {
             throw new IllegalArgumentException("La tâche ne peut pas être null");
         }
-
-        // Si c'est une nouvelle tâche, définir la date de création
         if (task.getId() == null && task.getCreationDate() == null) {
             task.setCreationDate(clock.instant());
-        }
-        if (task.getResponsableId() == null && task.getResponsableFullname() == null) {
-            task.setResponsableId(keycloakUserService.getUserIdByUserName(username));
-            task.setResponsableFullname(keycloakUserService.getFullNameByUserName(username));
-        }
-        // Valeurs par défaut si non définies
-        if (task.getStatut() == null) {
-            task.setStatut(StatutEnum.A_FAIRE);
-        }
-        if (task.getPriority() == null) {
-            task.setPriority(TaskPriority.NORMALE);
+            task.setResponsableId(keycloakUserService.getUserIdByUserName(task.getResponsableUsername()));
+            task.setResponsableFullname(keycloakUserService.getFullNameByUserName(task.getResponsableUsername()));
+
         }
 
         return taskRepository.saveAndFlush(task);
@@ -142,7 +133,7 @@ public class TaskService {
         if (taskOpt.isPresent()) {
             Task task = taskOpt.get();
             task.setStatut(StatutEnum.TERMINER);
-            task.setDateFin(LocalDate.now(clock));
+            task.setDateFin(LocalDateTime.now(clock));
             taskRepository.saveAndFlush(task);
         }
     }

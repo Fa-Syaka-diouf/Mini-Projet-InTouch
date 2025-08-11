@@ -12,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.TemporalAccessor;
 
 @Entity
@@ -69,6 +70,11 @@ public class Task extends AbstractEntity<Long> {
     @Column(name = "responsableFullName")
     private String responsableFullname;
 
+    @Setter
+    @Getter
+    @Column(name = "responsableUsername")
+    private String responsableUsername;
+
 
     @Setter
     @Getter
@@ -86,7 +92,7 @@ public class Task extends AbstractEntity<Long> {
     @Getter
     @Column(name = "date_de_fin")
     @Nullable
-    private LocalDate dateFin;
+    private LocalDateTime dateFin;
 
 
     @Override
