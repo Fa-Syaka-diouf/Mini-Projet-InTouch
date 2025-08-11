@@ -23,7 +23,7 @@
                             </div>
                         </div>
 
-                        <div class="otp-info">
+                        <div id="otp-info" class="otp-info">
                             <h2 class="otp-title">Code de vérification</h2>
                             <p class="otp-description">Entrez le code de vérification généré par votre application d'authentification</p>
                         </div>
@@ -43,28 +43,26 @@
 
                             <!-- Formulaire de réinitialisation OTP (masqué par défaut) -->
                             <div id="reset-otp-form" class="${properties.kcFormGroupClass!}" style="display: none;">
-                                <div class="${properties.kcLabelWrapperClass!}">
-                                    <label for="reset-email" class="${properties.kcLabelClass!}">Confirmez votre adresse email :</label>
-                                </div>
-                                <div class="${properties.kcInputWrapperClass!}">
-                                    <input id="reset-email" name="reset-email" type="email" class="${properties.kcInputClass!}"
+                                <div class=" form-group">
+                                    <label for="reset-email" class="${properties.kcLabelClass!} form-label">Confirmez votre adresse email :</label>
+                                    <input id="reset-email" name="reset-email" type="email" class="${properties.kcInputClass!} form-input"
                                            placeholder="votre@email.com"/>
                                 </div>
-                                <div class="${properties.kcFormButtonsClass!}" style="margin-top: 10px;">
-                                    <button type="button" id="confirm-reset-btn" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!}">
+                                <div class="${properties.kcFormButtonsClass!} form-group" style="margin-top: 10px;">
+                                    <button type="button" id="confirm-reset-btn" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} login-button">
                                         Envoyer l'email de réinitialisation
                                     </button>
-                                    <button type="button" id="cancel-reset-btn" class="${properties.kcButtonClass!} ${properties.kcButtonSecondaryClass!}">
+                                    <button type="button" id="cancel-reset-btn" class="${properties.kcButtonClass!} ${properties.kcButtonSecondaryClass!} login-button">
                                         Annuler
                                     </button>
                                 </div>
                             </div>
 
                             <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
-                                <!-- Bouton de réinitialisation -->
-                                <button type="button" id="reset-otp-btn" class="${properties.kcButtonClass!} ${properties.kcButtonSecondaryClass!}">
+                                <a id="reset-otp-btn" class="${properties.kcButtonClass!} ${properties.kcButtonSecondaryClass!}">
                                     ${msg("resetOTP","Je n'ai pas accès à mon OTP")}
-                                </button>
+                                </a>
+
                             </div>
                             <div class="back-to-login">
                                 <a href="${url.loginUrl}" class="back-link">← Retour à la connexion</a>
@@ -75,10 +73,7 @@
             </div>
         </div>
 
-        <!-- Variables JavaScript pour le debug -->
         <script>
-          // Variables disponibles dans le contexte Keycloak pour debug
-          console.log('=== DEBUG KEYCLOAK CONTEXT ===');
           <#if auth??>
           console.log('auth object exists');
           <#if auth.attemptedUsername??>
@@ -104,6 +99,8 @@
             const confirmResetBtn = document.getElementById('confirm-reset-btn');
             const cancelResetBtn = document.getElementById('cancel-reset-btn');
             const kcFormButtons = document.getElementById('kc-form-buttons');
+            const otp_info = document.getElementById('otp-info');
+            const kc_login = document.getElementById('kc-login');
             const otpInput = document.querySelector('input[name="otp"]');
             const resetEmailInput = document.getElementById('reset-email');
 
@@ -127,6 +124,8 @@
               resetEmailInput.required = true;
               kcFormButtons.style.display = 'none';
               otpInput.style.display = 'none';
+              otp_info.style.display = 'none';
+              kc_login.style.display = 'none';
               otpInput.parentElement.style.display = 'none';
               resetEmailInput.focus();
             });
@@ -136,6 +135,8 @@
               resetEmailInput.required = false;
               kcFormButtons.style.display = 'block';
               otpInput.style.display = 'block';
+              otp_info.style.display = 'block';
+              kc_login.style.display = 'block';
               otpInput.parentElement.style.display = 'flex';
               resetEmailInput.value = '';
             });
@@ -165,6 +166,7 @@
               fetch('http://localhost:8080/api/reset-otp', {
                 method: 'POST',
                 mode: 'cors',                                  // ← AJOUT IMPORTANT
+                credentials: 'include',
                 headers: {
                   'Content-Type': 'application/x-www-form-urlencoded',
                   'Accept': 'application/json'
@@ -183,7 +185,6 @@
                 .then(data => {
                   if (data.success) {
                     alert('Un email de réinitialisation a été envoyé à votre adresse. Vérifiez votre boîte mail.');
-                    window.location.href = '${url.loginUrl}';
                   } else {
                     alert(data.message || 'Erreur lors de l\'envoi de l\'email. Vérifiez votre adresse email.');
                   }
@@ -204,7 +205,6 @@
               return emailRegex.test(email);
             }
 
-            // Gérer l'appui sur Entrée
             resetEmailInput.addEventListener('keypress', function(e) {
               if (e.key === 'Enter') {
                 confirmResetBtn.click();

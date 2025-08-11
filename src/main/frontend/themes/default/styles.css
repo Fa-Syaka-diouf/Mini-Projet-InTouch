@@ -18,3 +18,7 @@ vaadin-side-nav-item::part(content):hover,
 vaadin-side-nav-item::part(link):hover {
     color: #243163 !important;
 }
+
+button{
+    background-color: #243163 !important;
+}

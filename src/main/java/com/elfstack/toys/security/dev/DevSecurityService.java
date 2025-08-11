@@ -31,6 +31,10 @@ public class DevSecurityService {
         var user = getAuthenticatedUser();
         return Objects.requireNonNull(user.getPrincipal().getAttribute("preferred_username"));
     }
+    public String getCurrentFullname() {
+        var user = getAuthenticatedUser();
+        return Objects.requireNonNull(user.getPrincipal().getAttribute("name"));
+    }
     public String getIdTokenValue() {
         var auth = getAuthenticatedUser();
         var principal = auth.getPrincipal();

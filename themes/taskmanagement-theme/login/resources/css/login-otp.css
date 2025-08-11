@@ -255,7 +255,24 @@ form {
         box-shadow: 0 0 0 8px rgba(165, 27, 61, 0);
     }
 }
+#reset-otp-form{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+#reset-otp-btn {
+    color: #e53e3e;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+}
 
+#reset-otp-btn:hover {
+    text-decoration: underline;
+}
 .login-button:hover {
     transform: translateY(-1px);
     animation-duration: 1s;

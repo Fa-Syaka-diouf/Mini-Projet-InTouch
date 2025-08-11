@@ -1,43 +1,40 @@
-//package com.elfstack.toys.taskmanagement.ui.view;
+//package com.elfstack.toys.admin.ui;
 //
 //import com.elfstack.toys.base.ui.component.ViewToolbar;
+//import com.elfstack.toys.taskmanagement.domain.StatutEnum;
 //import com.elfstack.toys.taskmanagement.domain.Task;
-////import com.elfstack.toys.taskmanagement.service.KeycloakUserService;
 //import com.elfstack.toys.taskmanagement.service.TaskService;
 //import com.elfstack.toys.usermanagement.domain.KeycloakUserDto;
+//import com.elfstack.toys.usermanagement.service.KeycloakUserService;
 //import com.vaadin.flow.component.button.Button;
 //import com.vaadin.flow.component.button.ButtonVariant;
 //import com.vaadin.flow.component.combobox.ComboBox;
 //import com.vaadin.flow.component.datepicker.DatePicker;
 //import com.vaadin.flow.component.grid.Grid;
-//import com.elfstack.toys.taskmanagement.domain.StatutEnum;
 //import com.vaadin.flow.component.html.Main;
 //import com.vaadin.flow.component.notification.Notification;
 //import com.vaadin.flow.component.notification.NotificationVariant;
 //import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 //import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-//import com.vaadin.flow.component.textfield.TextField;
 //import com.vaadin.flow.component.textfield.TextArea;
-//import com.vaadin.flow.router.Menu;
-//import com.vaadin.flow.router.PageTitle;
+//import com.vaadin.flow.component.textfield.TextField;
 //import com.vaadin.flow.router.Route;
 //import com.vaadin.flow.theme.lumo.LumoUtility;
-//import jakarta.annotation.security.PermitAll;
+//import jakarta.annotation.security.RolesAllowed;
 //
 //import java.time.Clock;
 //import java.time.format.DateTimeFormatter;
 //import java.time.format.FormatStyle;
-//import java.util.Collection;
 //import java.util.Optional;
 //
-//@Route("task-list")
-//@PageTitle("Task List")
-//@Menu(order = 0, icon = "vaadin:clipboard-check", title = "Task List")
-//@PermitAll
-//public class TaskListView extends Main {
+//import static com.vaadin.flow.spring.data.VaadinSpringDataHelpers.toSpringPageRequest;
+//
+//@Route(value = "admin/task-management", layout = AdminLayout.class)
+//@RolesAllowed("ADMIN")
+//public class TaskManagement extends Main {
 //
 //    private final TaskService taskService;
-////    private final KeycloakUserService keycloakUserService;
+//    private final KeycloakUserService keycloakUserService;
 //
 //    final TextField libelle;
 //    final TextArea description;
@@ -48,10 +45,9 @@
 //    final Button createBtn;
 //    final Grid<Task> taskGrid;
 //
-////    public TaskListView(TaskService taskService, KeycloakUserService keycloakUserService, Clock clock)
-//    public TaskListView(TaskService taskService, Clock clock){
+//    TaskManagement(TaskService taskService, KeycloakUserService keycloakUserService, Clock clock){
 //        this.taskService = taskService;
-////        this.keycloakUserService = keycloakUserService;
+//        this.keycloakUserService = keycloakUserService;
 //
 //        libelle = new TextField();
 //        libelle.setPlaceholder("Libellé de la tâche");
@@ -82,9 +78,7 @@
 //        assigneeComboBox.setLabel("Assigner à");
 //        assigneeComboBox.setPlaceholder("Sélectionner un utilisateur");
 //        assigneeComboBox.setItemLabelGenerator(user ->
-//                String.format("%s %s (%s)",
-//                        Optional.ofNullable(user.getFirstName()).orElse(""),
-//                        Optional.ofNullable(user.getLastName()).orElse(""),
+//                String.format("%s",
 //                        user.getUsername()
 //                ).trim()
 //        );
@@ -100,7 +94,7 @@
 //        statutComboBox.setMinWidth("12em");
 //
 //
-////        loadUsers();
+//        loadUsers();
 //
 //
 //        createBtn = new Button("Créer la tâche", event -> createTask());
@@ -112,17 +106,17 @@
 //        var dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(getLocale());
 //
 //        taskGrid = new Grid<>();
-////        taskGrid.setItems(query -> taskService.list(toSpringPageRequest(query)).stream());
+//        taskGrid.setItems(query -> taskService.list(toSpringPageRequest(query)).stream());
 //        taskGrid.addColumn(Task::getLibelle).setHeader("Libellé").setWidth("200px");
 //        taskGrid.addColumn(Task::getDescription).setHeader("Description").setWidth("300px");
-////        taskGrid.addColumn(task -> Optional.ofNullable(task.getDateLimite()).map(dateFormatter::format).orElse("Aucune"))
-////                .setHeader("Date limite").setWidth("150px");
+//        taskGrid.addColumn(task -> Optional.ofNullable(task.getDateLimite()).map(dateFormatter::format).orElse("Aucune"))
+//                .setHeader("Date limite").setWidth("150px");
 //        taskGrid.addColumn(task -> Optional.ofNullable(task.getDateFin()).map(dateFormatter::format).orElse("Non définie"))
 //                .setHeader("Date de fin").setWidth("150px");
-//        taskGrid.addColumn(task -> Optional.of(task.getResponsableId()).map(String::valueOf).orElse("Non assigné"))
+//        taskGrid.addColumn(task -> Optional.of(task.getResponsableUsername()).map(String::valueOf).orElse("Non assigné"))
 //                .setHeader("Assigné à").setWidth("150px");
-////        taskGrid.addColumn(task -> Optional.of(task.getStatut()).map(Enum::name).orElse("Indéfini"))
-////                .setHeader("Statut").setWidth("120px");
+//        taskGrid.addColumn(task -> Optional.of(task.getStatut()).map(Enum::name).orElse("Indéfini"))
+//                .setHeader("Statut").setWidth("120px");
 //        taskGrid.addColumn(task -> dateTimeFormatter.format(task.getCreationDate()))
 //                .setHeader("Date de création").setWidth("180px");
 //        taskGrid.setSizeFull();
@@ -147,17 +141,16 @@
 //        add(new ViewToolbar("Liste des Tâches", formLayout));
 //        add(taskGrid);
 //    }
-//
-////    private void loadUsers() {
-////        try {
-//////            var users = keycloakUserService.getAllUsers();
-////            assigneeComboBox.setItems((Collection<KeycloakUserDto>) users);
-////        } catch (Exception e) {
-////            Notification.show("Erreur lors du chargement des utilisateurs: " + e.getMessage(),
-////                            5000, Notification.Position.BOTTOM_END)
-////                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
-////        }
-////    }
+//    private void loadUsers() {
+//        try {
+//            var users = keycloakUserService.getAllUsers();
+//            assigneeComboBox.setItems(users);
+//        } catch (Exception e) {
+//            Notification.show("Erreur lors du chargement des utilisateurs: " + e.getMessage(),
+//                            5000, Notification.Position.BOTTOM_END)
+//                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+//        }
+//    }
 //
 //    private void createTask() {
 //
@@ -178,8 +171,7 @@
 //        try {
 //            KeycloakUserDto selectedUser = assigneeComboBox.getValue();
 //            String responsableId = selectedUser.getId();
-//            String responsableFirstName = selectedUser.getFirstName();
-//            String responsableLastName = selectedUser.getLastName();
+//            String responsableUsername = selectedUser.getUsername();
 //
 //            taskService.createTask(
 //                    libelle.getValue(),
@@ -187,8 +179,7 @@
 //                    dueDate.getValue(),
 //                    responsableId,
 //                    endDate.getValue(),
-//                    responsableFirstName,
-//                    responsableLastName,
+//                    responsableUsername,
 //                    statutComboBox.getValue()
 //            );
 //
@@ -215,4 +206,5 @@
 //        assigneeComboBox.clear();
 //        statutComboBox.setValue(StatutEnum.A_FAIRE);
 //    }
+//
 //}

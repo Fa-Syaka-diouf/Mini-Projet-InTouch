@@ -67,6 +67,9 @@ class DevSecurityConfig {
                         .requestMatchers("/users-management").hasRole("ADMIN")
                         .requestMatchers("/system-config").hasRole("ADMIN")
                         .requestMatchers("/api/reset-otp").permitAll()
+                        .requestMatchers("/api/confirm-reset-otp").permitAll()
+                        .requestMatchers("/VAADIN/**").permitAll()
+                        .requestMatchers("/images/**").permitAll()
 
                         .requestMatchers("/task-list/**").hasAnyRole("ADMIN", "USER")
                 )

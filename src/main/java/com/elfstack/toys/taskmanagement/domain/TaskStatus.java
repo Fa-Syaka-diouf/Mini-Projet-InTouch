@@ -1,5 +1,8 @@
 package com.elfstack.toys.taskmanagement.domain;
 
+import lombok.Getter;
+
+@Getter
 public enum TaskStatus {
     NOUVEAU("Nouveau"),
     EN_COURS("En cours"),
@@ -12,10 +15,6 @@ public enum TaskStatus {
 
     TaskStatus(String displayName) {
         this.displayName = displayName;
-    }
-
-    public String getDisplayName() {
-        return displayName;
     }
 
     @Override

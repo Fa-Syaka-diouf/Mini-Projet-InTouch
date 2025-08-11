@@ -11,6 +11,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -30,9 +31,11 @@ public class AdminSettings extends Main {
 
     public AdminSettings(HolidaySyncService holidaySyncService) {
         this.holidaySyncService = holidaySyncService;
-        HorizontalLayout layout = new HorizontalLayout();
-        layout.setAlignItems(FlexComponent.Alignment.CENTER);
-        layout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+
+        VerticalLayout centerLayout = new VerticalLayout();
+        centerLayout.setSizeFull();
+        centerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        centerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
 
         ConfirmDialog dialog = new ConfirmDialog();
         int currentYear = LocalDate.now().getYear();
@@ -53,10 +56,10 @@ public class AdminSettings extends Main {
             dialog.open();
         });
 
-        layout.add(button);
-        add(layout);
-    }
+        centerLayout.add(button);
 
+        add(centerLayout);
+    }
 
     private void startSynchronization() {
         int currentYear = LocalDate.now().getYear();
@@ -85,4 +88,3 @@ public class AdminSettings extends Main {
         }));
     }
 }
-
