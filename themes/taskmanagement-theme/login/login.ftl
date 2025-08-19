@@ -47,12 +47,11 @@
                                 <#if realm.rememberMe && !usernameEditDisabled??>
                                     <label class="checkbox-container">
                                         <input tabindex="3" id="rememberMe" name="rememberMe" type="checkbox" <#if login.rememberMe??>checked</#if>>
-                                        <span class="checkmark"></span>
                                         Se rappeller de moi
                                     </label>
                                 </#if>
                                 <#if realm.resetPasswordAllowed>
-                                    <a tabindex="5" href="${url.loginResetCredentialsUrl}" class="forgot-password">Mot de passe oublie?</a>
+                                    <a tabindex="5" href="${url.loginResetCredentialsUrl}" class="forgot-password">Mot de passe oublié?</a>
                                 </#if>
                             </div>
 

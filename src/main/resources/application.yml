@@ -26,6 +26,7 @@ spring:
           starttls:
             enable: true
             required: true
+    default-encoding: UTF-8
 
   config:
     import: optional:file:.env[.properties]
@@ -62,11 +63,6 @@ spring:
       resource server:
         jwt:
           issuer-uri: ${ISSUER_URI}
-    # Désactiver OAuth2 temporairement
-    autoconfigure:
-      exclude:
-        - org.springframework.boot.autoconfigure.security.oauth2.OAuth2AutoConfiguration
-        - org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientAutoConfiguration
 
 # Configuration Keycloak
 keycloak:

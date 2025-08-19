@@ -6,16 +6,14 @@ import com.elfstack.toys.taskmanagement.domain.TaskPriority;
 import com.elfstack.toys.taskmanagement.domain.TaskRepository;
 import com.elfstack.toys.usermanagement.service.KeycloakUserService;
 import org.jspecify.annotations.Nullable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,7 +48,7 @@ public class TaskService {
         task.setResponsableFullname(responsableFullname);
         task.setPaysDestinataire(paysDestinataire);
         task.setSlaDays(slaDays);
-        task.setPriority(priority != null ? priority : TaskPriority.NORMALE);
+        task.setPriority(priority != null ? priority : TaskPriority.MOYENNE);
         task.setDateLimite(dateLimite);
         task.setStatut(statut != null ? statut : StatutEnum.A_FAIRE);
 
@@ -117,6 +115,20 @@ public class TaskService {
         return taskRepository.findByResponsableFullname(fullname);
     }
 
+    @Transactional(readOnly = true)
+
+    public List<Task> getTasksEnRetard() {
+        return taskRepository.findTasksEnRetard(PageRequest.of(0, 5));
+    }
+
+    LocalDate today = LocalDate.now();
+    LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
+
+    Pageable topFive = PageRequest.of(0, 5);
+    @Transactional(readOnly = true)
+    public List<Task> getTasksAVenir() {
+        return taskRepository.findNextTasks(today, endOfWeek, topFive);
+    }
     @Transactional(readOnly = true)
     public List<Task> findByStatut(StatutEnum statut) {
         return taskRepository.findByStatut(statut);

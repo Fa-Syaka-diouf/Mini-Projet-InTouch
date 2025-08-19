@@ -274,7 +274,7 @@ public final class AdminPage extends Main {
     }
 
     private Component createStatusBadge(Task task) {
-        Span badge = new Span(getStatusLabel(task.getStatut()));
+        Span badge = new Span(task.getStatut().getValue());
 
         switch (task.getStatut()) {
             case A_FAIRE:
@@ -282,6 +282,7 @@ public final class AdminPage extends Main {
                 break;
             case EN_COURS:
                 badge.getElement().getThemeList().add("badge");
+                badge.addClassName("badge-custom-en-cours");
                 break;
             case TERMINER:
                 badge.getElement().getThemeList().add("badge success");
@@ -299,21 +300,24 @@ public final class AdminPage extends Main {
             return new Span("Normale");
         }
 
-        Span badge = new Span(getPriorityLabel(task.getPriority()));
+        Span badge = new Span(task.getPriority().getDisplayName());
 
         switch (task.getPriority()) {
-            case FAIBLE:
+            case TRES_BASSE:
                 badge.getElement().getThemeList().add("badge contrast");
                 break;
-            case NORMALE:
-                badge.getElement().getThemeList().add("badge");
+            case BASSE:
+                badge.getElement().getThemeList().add("badge success");
                 break;
-            case ELEVEE:
-                badge.getElement().getThemeList().add("badge error");
+            case MOYENNE:
+                badge.getElement().getThemeList().add("badge");
+                badge.addClassName("badge-custom-en-cours");
+                break;
+            case HAUTE:
+                badge.getElement().getThemeList().add("badge warning");
                 break;
             case CRITIQUE:
                 badge.getElement().getThemeList().add("badge error");
-                badge.getElement().getStyle().set("background-color", "var(--lumo-error-color)");
                 break;
         }
 
@@ -445,15 +449,6 @@ public final class AdminPage extends Main {
         }
     }
 
-    private String getPriorityLabel(TaskPriority priority) {
-        switch (priority) {
-            case FAIBLE: return "Faible";
-            case NORMALE: return "Normale";
-            case ELEVEE: return "Élevée";
-            case CRITIQUE: return "Critique";
-            default: return priority.name();
-        }
-    }
 
     private static class TaskStatistics {
         int totalTasks;

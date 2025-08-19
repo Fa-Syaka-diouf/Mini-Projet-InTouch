@@ -7,7 +7,23 @@ vaadin-side-nav-item[current] vaadin-icon {
 vaadin-side-nav-item[current],
 vaadin-side-nav-item:hover {
     background-color: #a51b1b !important;
+    border-bottom-right-radius: 5px !important;
+    border-top-right-radius: 5px !important;
 }
+.badge-medium { background-color: #243163; color: white; !important;}
+.badge-custom-en-cours {
+    --lumo-primary-text-color: white;   /* couleur du texte si besoin */
+    --lumo-primary-color: #243163;         /* couleur de fond personnalisée */
+    --lumo-primary-color-10pct: #243163;
+}
+.bouton-custom{
+    --_lumo-button-text-color: #243163;
+    --lumo-primary-text-color: #a51b1b;
+}
+.save-button-custom{
+    --_lumo-button-text-color: white;
+}
+.badge-high { background-color: #e17055; color: white; }
 
 vaadin-side-nav-item::part(content){
     color: white !important;

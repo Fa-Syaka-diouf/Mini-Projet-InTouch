@@ -1,13 +1,16 @@
-package com.elfstack.toys.taskmanagement.ui.view;
+package com.elfstack.toys.base.ui.view;
 
-import com.elfstack.toys.admin.service.HolidaySyncService;
-import com.elfstack.toys.admin.ui.AdminLayout;
 import com.elfstack.toys.admin.service.CalendarService;
-import com.elfstack.toys.taskmanagement.domain.Task;
+import com.elfstack.toys.admin.service.HolidaySyncService;
+import com.elfstack.toys.base.ui.component.ViewToolbar;
+
+import com.elfstack.toys.security.dev.DevSecurityService;
 import com.elfstack.toys.taskmanagement.domain.StatutEnum;
+import com.elfstack.toys.taskmanagement.domain.Task;
 import com.elfstack.toys.taskmanagement.domain.TaskPriority;
 import com.elfstack.toys.taskmanagement.service.TaskService;
 import com.elfstack.toys.usermanagement.service.KeycloakUserService;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.card.Card;
@@ -36,36 +39,27 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.spring.annotation.UIScope;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
-import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
-@PageTitle("Gestion des tâches")
-@Route(value = "admin/task-management", layout = AdminLayout.class)
-@UIScope
-@RolesAllowed("ADMIN")
-public class TaskFormView extends VerticalLayout {
+@Route (value = "my-tasks" , layout = MainLayout.class)
+@RolesAllowed({"ADMIN", "USER"})
+public final class MyTask extends VerticalLayout {
 
     private final TaskService taskService;
     private final CalendarService calendarService;
-    private final KeycloakUserService keycloakUserService;
     private final HolidaySyncService holidaySyncService;
+    private final DevSecurityService devSecurityService;
 
     private final Grid<Task> grid = new Grid<>(Task.class, false);
     private final Button addTaskButton = new Button("Nouvelle tâche");
@@ -76,8 +70,8 @@ public class TaskFormView extends VerticalLayout {
     private CheckboxGroup<String> columnVisibilityGroup;
     private Button button;
     private Popover popover;
-    private final List<String> allColumns = Arrays.asList("statut", "responsable", "pays", "priority", "dateLimite", "sla", "description");
-    private final Set<String> defaultVisibleColumns = new HashSet<>(Arrays.asList("statut", "responsable", "dateLimite"));
+    private final List<String> allColumns = Arrays.asList("statut","pays", "priority", "dateLimite", "sla", "description");
+    private final Set<String> defaultVisibleColumns = new HashSet<>(Arrays.asList("statut", "dateLimite"));
 
     private final Dialog formDialog = new Dialog();
     private final FormLayout formLayout = new FormLayout();
@@ -88,7 +82,6 @@ public class TaskFormView extends VerticalLayout {
     private final ComboBox<String> paysDestinataire = new ComboBox<>("Pays destinataire (*)");
     private final DatePicker dateLimite = new DatePicker("Date limite calculée");
     private final ComboBox<TaskPriority> priority = new ComboBox<>("Priorité (*)");
-    private final ComboBox<String> responsableUsername = new ComboBox<>("Responsable (*)");
     private final Button saveButton = new Button("Enregistrer");
     private final Button cancelButton = new Button("Annuler");
     private final Button deleteButton = new Button("Supprimer");
@@ -98,12 +91,13 @@ public class TaskFormView extends VerticalLayout {
     private final Binder<Task> binder = new BeanValidationBinder<>(Task.class);
     private Task currentTask;
 
-    public TaskFormView(TaskService taskService,
-                        KeycloakUserService keycloakUserService,
-                        CalendarService calendarService,
-                        HolidaySyncService holidaySyncService) {
+    public MyTask(TaskService taskService,
+                    KeycloakUserService keycloakUserService,
+                    CalendarService calendarService,
+                    HolidaySyncService holidaySyncService,
+                    DevSecurityService devSecurityService) {
         this.taskService = taskService;
-        this.keycloakUserService = keycloakUserService;
+        this.devSecurityService = devSecurityService;
         this.calendarService = calendarService;
         this.holidaySyncService = holidaySyncService;
 
@@ -135,7 +129,7 @@ public class TaskFormView extends VerticalLayout {
         searchField.setValueChangeMode(ValueChangeMode.EAGER);
         setupColumnVisibility();
         configureGrid();
-        H3 title = new H3("Liste des Tâches");
+        H3 title = new H3("Liste de vos Tâches");
         HorizontalLayout header = new HorizontalLayout(title);
         HorizontalLayout toolbarLayout = new HorizontalLayout(searchField, addTaskButton, button);
         toolbarLayout.setAlignItems(HorizontalLayout.Alignment.END);
@@ -199,7 +193,6 @@ public class TaskFormView extends VerticalLayout {
         columnVisibilityGroup.setItemLabelGenerator(item -> {
             return switch (item) {
                 case "statut" -> "Statut";
-                case "responsable" -> "Responsable";
                 case "pays" -> "Pays";
                 case "priority" -> "Priorité";
                 case "dateLimite" -> "Date limite";
@@ -306,25 +299,6 @@ public class TaskFormView extends VerticalLayout {
         statutColumn.setEditorComponent(statutField);
 
 
-        Grid.Column<Task> responsableColumn = grid.addColumn(Task::getResponsableUsername)
-                .setKey("responsable")
-                .setHeader("Responsable")
-                .setSortable(true)
-                .setResizable(true)
-                .setWidth("180px")
-                .setFlexGrow(0);
-        ComboBox<String> responsableField = new ComboBox<>();
-        try {
-            List<String> usernames = keycloakUserService.getAllUsernames();
-            responsableField.setItems(usernames);
-        } catch (Exception e) {
-            responsableField.setItems();
-        }
-        responsableField.setWidthFull();
-        gridBinder.forField(responsableField)
-                .asRequired("Le responsable ne peut pas être vide")
-                .bind(Task::getResponsableUsername, Task::setResponsableUsername);
-        responsableColumn.setEditorComponent(responsableField);
 
 
         Grid.Column<Task> paysColumn = grid.addColumn(Task::getPaysDestinataire)
@@ -428,8 +402,8 @@ public class TaskFormView extends VerticalLayout {
                     });
 
                     Button detailsButton = new Button("Détails");
-                    detailsButton.addClassName("bouton-custom");
                     detailsButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+                    detailsButton.addClassName("bouton-custom");
                     detailsButton.addClickListener(e -> showTaskDetails(task));
 
                     HorizontalLayout actionButtons = new HorizontalLayout(editButton, detailsButton);
@@ -468,11 +442,15 @@ public class TaskFormView extends VerticalLayout {
 
     private void showTaskDetails(Task task) {
         detailsDialog.removeAll();
+
+        // Configuration du dialog pour une taille optimale
         detailsDialog.setWidth("800px");
         detailsDialog.setHeight("auto");
         detailsDialog.setMaxHeight("90vh");
         detailsDialog.setResizable(false);
         detailsDialog.setDraggable(true);
+
+        // Header avec titre et statut
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -485,14 +463,19 @@ public class TaskFormView extends VerticalLayout {
         H2 title = new H2("Détails de la tâche");
         title.addClassNames(LumoUtility.Margin.NONE, LumoUtility.FontSize.XLARGE);
         title.getStyle().set("color", "var(--lumo-primary-color)");
+
+        // Badge de statut
         Span statusBadge = createStatusBadge(task.getStatut());
 
         header.add(title, statusBadge);
+
+        // Contenu principal en deux colonnes
         HorizontalLayout mainContent = new HorizontalLayout();
         mainContent.setWidthFull();
         mainContent.setSpacing(true);
         mainContent.addClassNames(LumoUtility.Gap.LARGE);
 
+        // Colonne gauche - Informations principales
         VerticalLayout leftColumn = new VerticalLayout();
         leftColumn.setPadding(false);
         leftColumn.setSpacing(true);
@@ -508,9 +491,9 @@ public class TaskFormView extends VerticalLayout {
         leftColumn.add(createStyledDetailRow("📝", "Description", task.getDescription()));
         leftColumn.add(createStyledDetailRow("⚡", "Priorité",
                 task.getPriority() != null ? task.getPriority().name() : "N/A"));
-        leftColumn.add(createStyledDetailRow("👤", "Responsable", task.getResponsableFullname()));
         leftColumn.add(createStyledDetailRow("🌍", "Pays destinataire", task.getPaysDestinataire()));
 
+        // Colonne droite - Dates et SLA
         VerticalLayout rightColumn = new VerticalLayout();
         rightColumn.setPadding(false);
         rightColumn.setSpacing(true);
@@ -536,6 +519,7 @@ public class TaskFormView extends VerticalLayout {
 
         mainContent.add(leftColumn, rightColumn);
 
+        // Section des actions avec séparateur visuel
         Div separator = new Div();
         separator.addClassNames(LumoUtility.Background.CONTRAST_20);
         separator.getStyle()
@@ -543,6 +527,7 @@ public class TaskFormView extends VerticalLayout {
                 .set("width", "100%")
                 .set("margin", "var(--lumo-space-l) 0");
 
+        // Boutons d'action avec icônes et styles améliorés
         Button deleteButton = new Button("Supprimer", VaadinIcon.TRASH.create());
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_PRIMARY);
         deleteButton.addClickListener(e -> {
@@ -611,6 +596,7 @@ public class TaskFormView extends VerticalLayout {
                 LumoUtility.FontWeight.SEMIBOLD
         );
 
+        // Couleurs selon le statut
         String statusName = status.toString().toUpperCase();
         switch (statusName) {
             case "COMPLETED":
@@ -639,11 +625,14 @@ public class TaskFormView extends VerticalLayout {
         row.setSpacing(true);
         row.addClassNames(LumoUtility.Padding.Vertical.XSMALL);
 
+        // Icône
         Span iconSpan = new Span(icon);
         iconSpan.getStyle()
                 .set("font-size", "16px")
                 .set("width", "20px")
                 .set("text-align", "center");
+
+        // Label
         Span labelSpan = new Span(label);
         labelSpan.addClassNames(
                 LumoUtility.FontWeight.SEMIBOLD,
@@ -653,6 +642,7 @@ public class TaskFormView extends VerticalLayout {
         labelSpan.setWidth("120px");
         labelSpan.getStyle().set("flex-shrink", "0");
 
+        // Valeur avec gestion du texte long
         Span valueSpan = new Span(value != null && !value.isEmpty() ? value : "Non renseigné");
         valueSpan.addClassNames(LumoUtility.FontSize.SMALL);
 
@@ -661,9 +651,11 @@ public class TaskFormView extends VerticalLayout {
             valueSpan.getStyle().set("font-style", "italic");
         }
 
+        // Gestion du texte long pour la description
         if (label.equals("Description") && value != null && value.length() > 100) {
             valueSpan.setText(value.substring(0, 100) + "...");
-            valueSpan.getElement().setAttribute("title", value);   }
+            valueSpan.getElement().setAttribute("title", value); // Tooltip avec texte complet
+        }
 
         row.add(iconSpan, labelSpan, valueSpan);
         row.setFlexGrow(1, valueSpan);
@@ -736,19 +728,15 @@ public class TaskFormView extends VerticalLayout {
             }
 
             searchTerm = searchTerm.trim().toLowerCase();
-
-            boolean matchesLibelle = task.getLibelle() != null &&
-                    task.getLibelle().toLowerCase().contains(searchTerm);
-            boolean matchesDescription = task.getDescription() != null &&
-                    task.getDescription().toLowerCase().contains(searchTerm);
-            boolean matchesResponsable = task.getResponsableFullname() != null &&
-                    task.getResponsableFullname().toLowerCase().contains(searchTerm);
-            boolean matchesPays = task.getPaysDestinataire() != null &&
-                    task.getPaysDestinataire().toLowerCase().contains(searchTerm);
+            boolean matchesLibelle = task.getLibelle().toLowerCase().contains(searchTerm);
+            boolean matchesDescription = task.getDescription().toLowerCase().contains(searchTerm);
+            boolean matchesResponsable = task.getResponsableFullname().toLowerCase().contains(searchTerm);
+            boolean matchesPays = task.getPaysDestinataire().toLowerCase().contains(searchTerm);
 
             return matchesLibelle || matchesDescription || matchesResponsable || matchesPays;
         });
     }
+
     private void configureForm() {
         configureFormFields();
         configureBinder();
@@ -789,9 +777,6 @@ public class TaskFormView extends VerticalLayout {
         priority.setValue(TaskPriority.MOYENNE);
         priority.setRequired(true);
 
-        responsableUsername.setPlaceholder("Sélectionner un responsable");
-        responsableUsername.setRequired(true);
-
         paysDestinataire.addValueChangeListener(e -> updateDueDate());
         slaDays.addValueChangeListener(e -> updateDueDate());
     }
@@ -831,17 +816,14 @@ public class TaskFormView extends VerticalLayout {
                 )
                 .bind(Task::getSlaDays, Task::setSlaDays);
 
-        binder.forField(responsableUsername)
-                .asRequired("Responsable obligatoire")
-                .bind(Task::getResponsableUsername, Task::setResponsableUsername);
     }
 
     private void configureFormButtons() {
         saveButton.getStyle().setBackgroundColor("#243163");
-        saveButton.addClassName("save-button-custom");
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        cancelButton.addClassName("bouton-custom");
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        saveButton.addClassName("save-button-custom");
+        cancelButton.addClassName("bouton-custom");
 
         saveButton.getStyle().set("margin-right", "var(--lumo-space-s)");
         deleteButton.getStyle().set("margin-left", "auto");
@@ -860,7 +842,6 @@ public class TaskFormView extends VerticalLayout {
                 libelle,
                 statut,
                 description,
-                responsableUsername,
                 paysDestinataire,
                 slaDays,
                 dateLimite,
@@ -888,7 +869,6 @@ public class TaskFormView extends VerticalLayout {
 
     private void loadInitialData() {
         loadAvailableCountries();
-        loadResponsibleUsers();
     }
 
     private void loadAvailableCountries() {
@@ -904,15 +884,6 @@ public class TaskFormView extends VerticalLayout {
         } catch (Exception e) {
             paysDestinataire.setItems("FR", "UK", "US", "DE", "ES", "IT");
             paysDestinataire.setValue("FR");
-        }
-    }
-
-    private void loadResponsibleUsers() {
-        try {
-            List<String> usernames = keycloakUserService.getAllUsernames();
-            responsableUsername.setItems(usernames);
-        } catch (Exception e) {
-            responsableUsername.setItems();
         }
     }
 
@@ -945,7 +916,13 @@ public class TaskFormView extends VerticalLayout {
         try {
             if (binder.writeBeanIfValid(currentTask)) {
                 boolean isNew = currentTask.getId() == null;
-                Task savedTask = isNew ? taskService.save(currentTask) : taskService.update(currentTask);
+                if (isNew){
+                    currentTask.setResponsableUsername(devSecurityService.getCurrentUsername());
+                    Task savedTask = taskService.save(currentTask);
+                }
+                else{
+                    Task savedTask = taskService.update(currentTask);
+                }
 
                 updateList();
                 closeForm();
@@ -1006,16 +983,25 @@ public class TaskFormView extends VerticalLayout {
             if (currentTask != null) currentTask.setDateLimite(null);
         }
     }
+
     private void updateList() {
         try {
-            List<Task> tasks = taskService.findAll();
-            dataView = grid.setItems(tasks);
-            setupSearchFilter();
+            String CurrentUsername = devSecurityService.getCurrentUsername(); // Récupération de l'utilisateur connecté
+            List<Task> tasks = taskService.findAll()
+                    .stream()
+                    .filter(task -> CurrentUsername.equals(task.getResponsableUsername()))
+                    .toList();
+            if (dataView != null) {
+                dataView = grid.setItems(tasks);
+                setupSearchFilter();
+            } else {
+                grid.setItems(tasks);
+            }
         } catch (Exception e) {
-            showErrorNotification("Erreur lors du chargement des tâches : " + e.getMessage());
+            Notification.show("Erreur lors du chargement des tâches : " + e.getMessage())
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
-
 
     private String getStatusBadgeVariant(StatutEnum status) {
         return switch (status) {
@@ -1037,7 +1023,6 @@ public class TaskFormView extends VerticalLayout {
             default        -> "contrast";
         };
     }
-
 
     private void showSuccessNotification(String message) {
         Notification notification = Notification.show(message, 3000, Notification.Position.TOP_CENTER);
