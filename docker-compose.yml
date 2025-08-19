@@ -1,4 +1,20 @@
 services:
+
+  # MySQL pour le formulaire de tâches
+  mysql-form:
+    image: mysql:8.0
+    container_name: mysql-form
+    restart: always
+    ports:
+      - "3309:3306"  # Port défini pour mysql-form
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_FORM_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_FORM_DATABASE}
+      MYSQL_USER: ${MYSQL_FORM_USER}
+      MYSQL_PASSWORD: ${MYSQL_FORM_PASSWORD}
+    volumes:
+      - mysql_form_data:/var/lib/mysql
+
   # MySQL pour Keycloak
   mysql-keycloak:
     image: mysql:8.0

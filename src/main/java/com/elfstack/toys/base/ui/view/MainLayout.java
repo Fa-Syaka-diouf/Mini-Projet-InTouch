@@ -254,11 +254,12 @@ public final class MainLayout extends AppLayout {
     private SideNav createSideNav() {
         var nav = new SideNav();
         nav.getStyle().set("margin-top", "1rem");
-        SideNavItem dashboard = new SideNavItem("Mes Tâches", MainView.class, new Icon(VaadinIcon.CLIPBOARD_CHECK));
+        SideNavItem dashboard = new SideNavItem("Dashboard", MainView.class, new Icon(VaadinIcon.HOME));
+        SideNavItem my_task = new SideNavItem("Mes Tâches", MyTask.class, new Icon(VaadinIcon.CLIPBOARD_CHECK));
         SideNavItem notifications = new SideNavItem("Notifications", MainNotification.class, new Icon(VaadinIcon.BELL));
         SideNavItem historique = new SideNavItem("Historique", MainHistorique.class, new Icon(VaadinIcon.ARCHIVE));
 
-        nav.addItem(dashboard, notifications, historique);
+        nav.addItem(dashboard,my_task, notifications, historique);
 
         if (devSecurityService.isAdmin()) {
             SideNavItem pageAdmin = new SideNavItem("Page Admin", AdminPage.class, new Icon(VaadinIcon.TOOLS));

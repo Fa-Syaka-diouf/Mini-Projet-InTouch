@@ -1,9 +1,10 @@
 package com.elfstack.toys.taskmanagement.domain;
 
 public enum TaskPriority {
-    FAIBLE("Faible"),
-    NORMALE("Normale"),
-    ELEVEE("Élevée"),
+    TRES_BASSE("Très basse"),
+    BASSE("Basse"),
+    MOYENNE("Moyenne"),
+    HAUTE("Haute"),
     CRITIQUE("Critique");
 
     private final String displayName;

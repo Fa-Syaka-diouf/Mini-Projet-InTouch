@@ -19,7 +19,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -55,4 +58,17 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByResponsableFullname(String fullname);
 
     List<Task> findByPriority(TaskPriority priority);
+
+    @Query("SELECT t FROM Task t WHERE t.dateLimite < CURRENT_DATE")
+    List<Task> findTasksEnRetard(Pageable pageable);
+
+    @Query("SELECT t FROM Task t " +
+            "WHERE t.dateLimite BETWEEN :today AND :endOfWeek " +
+            "AND t.statut = 'A_FAIRE' " +
+            "ORDER BY t.dateLimite ASC")
+    List<Task> findNextTasks(@Param("today") LocalDate today,
+                             @Param("endOfWeek") LocalDate endOfWeek,
+                             Pageable pageable);
+
+
 }

@@ -74,25 +74,6 @@
         </div>
 
         <script>
-          <#if auth??>
-          console.log('auth object exists');
-          <#if auth.attemptedUsername??>
-          console.log('auth.attemptedUsername: ${auth.attemptedUsername}');
-          </#if>
-          <#if auth.username??>
-          console.log('auth.username: ${auth.username}');
-          </#if>
-          </#if>
-          <#if login??>
-          console.log('login object exists');
-          <#if login.username??>
-          console.log('login.username: ${login.username}');
-          </#if>
-          </#if>
-          console.log('=== END DEBUG ===');
-        </script>
-
-        <script>
           document.addEventListener('DOMContentLoaded', function() {
             const resetOtpBtn = document.getElementById('reset-otp-btn');
             const resetOtpForm = document.getElementById('reset-otp-form');
@@ -165,7 +146,7 @@
 
               fetch('http://localhost:8080/api/reset-otp', {
                 method: 'POST',
-                mode: 'cors',                                  // ← AJOUT IMPORTANT
+                mode: 'cors',
                 credentials: 'include',
                 headers: {
                   'Content-Type': 'application/x-www-form-urlencoded',

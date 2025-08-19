@@ -1,5 +1,6 @@
 package com.elfstack.toys.security.resetOtp;
 
+import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -12,6 +13,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -23,11 +25,10 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.security.SecureRandom;
 import java.util.stream.Collectors;
-
 @Slf4j
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = {"http://localhost:8081", "http://127.0.0.1:8081"},
+@CrossOrigin(origins = {"http://localhost:8081"},
         allowCredentials = "true",
         methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS})
 public class DevResetOtp {
@@ -38,12 +39,6 @@ public class DevResetOtp {
     @Value("${keycloak.realm}")
     private String realm;
 
-    @Value("${keycloak.admin.username}")
-    private String adminUsername;
-
-    @Value("${keycloak.admin.password}")
-    private String adminPassword;
-
     @Value("${keycloak.admin-client.client-secret}")
     private String secret_admin;
 
@@ -53,11 +48,8 @@ public class DevResetOtp {
     @Autowired
     private JavaMailSender mailSender;
 
-    // Stockage temporaire des tokens de réinitialisation
-    // En production, utilisez Redis ou une base de données
     private final Map<String, ResetToken> resetTokens = new ConcurrentHashMap<>();
 
-    // Classe interne pour gérer les tokens
     private static class ResetToken {
         private final String userId;
         private final String username;
@@ -80,10 +72,6 @@ public class DevResetOtp {
         public LocalDateTime getExpiryTime() { return expiryTime; }
     }
 
-    /**
-     * ÉTAPE 1: Demande de réinitialisation OTP
-     * Cette méthode envoie seulement un email avec un lien de confirmation
-     */
     @PostMapping("/reset-otp")
     public ResponseEntity<?> resetOTP(@RequestParam String username,
                                       @RequestParam String email) {
@@ -124,8 +112,7 @@ public class DevResetOtp {
             }
 
             UserResource userResource = usersResource.get(userId);
-            List<CredentialRepresentation> credentials = userResource.credentials();
-            List<CredentialRepresentation> otpCredentials = credentials.stream()
+            List<CredentialRepresentation> otpCredentials = userResource.credentials().stream()
                     .filter(cred -> "otp".equals(cred.getType()))
                     .toList();
 
@@ -134,13 +121,8 @@ public class DevResetOtp {
                         .body(Map.of("success", false, "message", "Aucun OTP configuré pour ce compte"));
             }
 
-            // Génération du token de réinitialisation
             String resetToken = generateResetToken();
-
-            // Stockage temporaire du token avec les informations utilisateur
             resetTokens.put(resetToken, new ResetToken(userId, username, email));
-
-            // Envoi de l'email avec le lien de confirmation
             sendResetEmail(email, username, resetToken);
 
             log.info("Email de réinitialisation OTP envoyé pour l'utilisateur: {}, Email: {}", username, email);
@@ -155,51 +137,70 @@ public class DevResetOtp {
         }
     }
 
-    /**
-     * ÉTAPE 2: Confirmation de la réinitialisation OTP
-     * Cette méthode est appelée quand l'utilisateur clique sur le lien dans l'email
-     */
     @GetMapping("/confirm-reset-otp")
     public ResponseEntity<?> confirmResetOTP(@RequestParam String token) {
         try {
-            // Vérification de l'existence du token
+            log.info("Confirmation de réinitialisation OTP avec token: {}", token);
+
             ResetToken resetToken = resetTokens.get(token);
             if (resetToken == null) {
-                log.warn("Tentative d'utilisation d'un token invalide: {}", token);
+                log.warn("Token invalide: {}", token);
                 return ResponseEntity.badRequest()
                         .body(Map.of("success", false, "message", "Lien de réinitialisation invalide"));
             }
 
-            // Vérification de l'expiration du token
             if (resetToken.isExpired()) {
-                resetTokens.remove(token); // Nettoyer le token expiré
-                log.warn("Tentative d'utilisation d'un token expiré: {}", token);
+                resetTokens.remove(token);
+                log.warn("Token expiré: {}", token);
                 return ResponseEntity.badRequest()
                         .body(Map.of("success", false, "message", "Lien de réinitialisation expiré"));
             }
 
-            // Connexion à Keycloak
+            log.info("Suppression de l'OTP pour l'utilisateur: {}", resetToken.getUsername());
+
             Keycloak keycloak = getKeycloakInstance();
             RealmResource realmResource = keycloak.realm(realm);
-            UsersResource usersResource = realmResource.users();
-            UserResource userResource = usersResource.get(resetToken.getUserId());
+            UserResource userResource = realmResource.users().get(resetToken.getUserId());
 
-            // Suppression des anciens OTP
-            List<CredentialRepresentation> credentials = userResource.credentials();
-            List<CredentialRepresentation> otpCredentials = credentials.stream()
+            // Suppression des OTP existants
+            List<CredentialRepresentation> otpCredentials = userResource.credentials().stream()
                     .filter(cred -> "otp".equals(cred.getType()))
-                    .toList();
+                    .collect(Collectors.toList());
 
-            // Supprimer tous les OTP existants
-            otpCredentials.forEach(cred -> userResource.removeCredential(cred.getId()));
+            log.info("Nombre d'OTP trouvés à supprimer: {}", otpCredentials.size());
 
-            // Supprimer le token utilisé
+            for (CredentialRepresentation cred : otpCredentials) {
+                log.info("Suppression de l'OTP avec ID: {}", cred.getId());
+                userResource.removeCredential(cred.getId());
+            }
+
+            // Ajout de la Required Action
+            UserRepresentation user = userResource.toRepresentation();
+            if (user.getRequiredActions() == null) {
+                user.setRequiredActions(new ArrayList<>());
+            }
+
+            user.getRequiredActions().clear(); // Nettoyer les autres actions
+            user.getRequiredActions().add("CONFIGURE_TOTP");
+            userResource.update(user);
+
+            log.info("Required Action CONFIGURE_TOTP ajoutée pour: {}", resetToken.getUsername());
+
+            // URL de redirection vers Keycloak
+            String keycloakLoginUrl = keycloakServerUrl + "/realms/" + realm +
+                    "/protocol/openid-connect/auth" +
+                    "?client_id=task-management-app" +  // Remplacez par votre vrai client-id
+                    "&response_type=code" +
+                    "&scope=openid%20profile%20email" +
+                    "&redirect_uri=" + java.net.URLEncoder.encode(frontendUrl + "/login/oauth2/code/keycloak", "UTF-8") +
+                    "&login_hint=" + java.net.URLEncoder.encode(resetToken.getUsername(), "UTF-8");
+
             resetTokens.remove(token);
 
-            log.info("Réinitialisation OTP confirmée pour l'utilisateur: {}", resetToken.getUsername());
+            log.info("Redirection vers: {}", keycloakLoginUrl);
 
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create(frontendUrl))
+                    .location(URI.create(keycloakLoginUrl))
                     .build();
 
         } catch (Exception e) {
@@ -209,9 +210,6 @@ public class DevResetOtp {
         }
     }
 
-    /**
-     * Génère un token de réinitialisation sécurisé
-     */
     private String generateResetToken() {
         SecureRandom random = new SecureRandom();
         byte[] bytes = new byte[32];
@@ -221,27 +219,32 @@ public class DevResetOtp {
 
     private void sendResetEmail(String email, String username, String resetToken) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(email);
-            message.setSubject("Réinitialisation de votre OTP - InTouchTask");
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
+            helper.setTo(email);
+            helper.setSubject("Réinitialisation de votre OTP - InTouchTask");
+
+            // CORRECTION MAJEURE : URL vers l'endpoint API correct
             String confirmationUrl = frontendUrl + "/api/confirm-reset-otp?token=" + resetToken;
 
-            String emailContent = String.format(
-                    "Bonjour %s,\n\n" +
-                            "Vous avez demandé la réinitialisation de votre authentification à deux facteurs (OTP).\n\n" +
-                            "Cliquez sur le lien suivant pour confirmer la réinitialisation :\n" +
-                            "%s\n\n" +
-                            "Ce lien expire dans 1 heure.\n\n" +
-                            "Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.\n\n" +
-                            "Cordialement,\n" +
-                            "L'équipe InTouchTask",
-                    username,
-                    confirmationUrl
-            );
+            String emailContent = "<html>" +
+                    "<body>" +
+                    "<p>Bonjour <b>" + username + "</b>,</p>" +
+                    "<p>Vous avez demandé la réinitialisation de votre authentification à deux facteurs (OTP).</p>" +
+                    "<p>Cliquez sur le lien suivant pour confirmer la réinitialisation :</p>" +
+                    "<p><a href='" + confirmationUrl + "'>Réinitialiser mon OTP</a></p>" +
+                    "<p>Ce lien expire dans 1 heure.</p>" +
+                    "<p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>" +
+                    "<br>" +
+                    "<p>Cordialement,<br>L'équipe InTouchTask</p>" +
+                    "</body>" +
+                    "</html>";
 
-            message.setText(emailContent);
-            mailSender.send(message);
+            helper.setText(emailContent, true);
+            mailSender.send(mimeMessage);
+
+            log.info("Email de réinitialisation OTP envoyé à {} avec URL: {}", email, confirmationUrl);
 
         } catch (Exception e) {
             log.error("Erreur lors de l'envoi de l'email à {}", email, e);
