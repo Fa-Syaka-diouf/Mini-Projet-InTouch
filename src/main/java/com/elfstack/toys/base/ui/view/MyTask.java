@@ -58,6 +58,7 @@ public final class MyTask extends VerticalLayout {
 
     private final TaskService taskService;
     private final CalendarService calendarService;
+    private final KeycloakUserService keycloakUserService;
     private final HolidaySyncService holidaySyncService;
     private final DevSecurityService devSecurityService;
 
@@ -87,7 +88,7 @@ public final class MyTask extends VerticalLayout {
     private final Button deleteButton = new Button("Supprimer");
     private Card card =  new Card();
     private final Dialog detailsDialog = new Dialog();
-
+    private final String CurrentUsername;
     private final Binder<Task> binder = new BeanValidationBinder<>(Task.class);
     private Task currentTask;
 
@@ -98,8 +99,10 @@ public final class MyTask extends VerticalLayout {
                     DevSecurityService devSecurityService) {
         this.taskService = taskService;
         this.devSecurityService = devSecurityService;
+        this.keycloakUserService = keycloakUserService;
         this.calendarService = calendarService;
         this.holidaySyncService = holidaySyncService;
+        this.CurrentUsername = devSecurityService.getCurrentUsername();
 
         addClassName("task-management-view");
         setSizeFull();
@@ -129,7 +132,9 @@ public final class MyTask extends VerticalLayout {
         searchField.setValueChangeMode(ValueChangeMode.EAGER);
         setupColumnVisibility();
         configureGrid();
-        H3 title = new H3("Liste de vos Tâches");
+        H1 title = new H1("Liste de vos Tâches");
+        title.addClassNames(LumoUtility.Margin.Bottom.LARGE);
+        title.getStyle().setColor("#243163");
         HorizontalLayout header = new HorizontalLayout(title);
         HorizontalLayout toolbarLayout = new HorizontalLayout(searchField, addTaskButton, button);
         toolbarLayout.setAlignItems(HorizontalLayout.Alignment.END);
@@ -462,20 +467,17 @@ public final class MyTask extends VerticalLayout {
 
         H2 title = new H2("Détails de la tâche");
         title.addClassNames(LumoUtility.Margin.NONE, LumoUtility.FontSize.XLARGE);
-        title.getStyle().set("color", "var(--lumo-primary-color)");
+        title.getStyle().set("color", "#243163");
 
-        // Badge de statut
         Span statusBadge = createStatusBadge(task.getStatut());
 
         header.add(title, statusBadge);
 
-        // Contenu principal en deux colonnes
         HorizontalLayout mainContent = new HorizontalLayout();
         mainContent.setWidthFull();
         mainContent.setSpacing(true);
         mainContent.addClassNames(LumoUtility.Gap.LARGE);
 
-        // Colonne gauche - Informations principales
         VerticalLayout leftColumn = new VerticalLayout();
         leftColumn.setPadding(false);
         leftColumn.setSpacing(true);
@@ -484,7 +486,8 @@ public final class MyTask extends VerticalLayout {
         leftColumn.getStyle().set("padding", "var(--lumo-space-m)");
 
         H4 leftTitle = new H4("Informations générales");
-        leftTitle.addClassNames(LumoUtility.Margin.Bottom.SMALL, LumoUtility.TextColor.PRIMARY);
+        leftTitle.addClassNames(LumoUtility.Margin.Bottom.SMALL);
+        leftTitle.addClassNames("details_title");
         leftColumn.add(leftTitle);
 
         leftColumn.add(createStyledDetailRow("📋", "Libellé", task.getLibelle()));
@@ -493,7 +496,6 @@ public final class MyTask extends VerticalLayout {
                 task.getPriority() != null ? task.getPriority().name() : "N/A"));
         leftColumn.add(createStyledDetailRow("🌍", "Pays destinataire", task.getPaysDestinataire()));
 
-        // Colonne droite - Dates et SLA
         VerticalLayout rightColumn = new VerticalLayout();
         rightColumn.setPadding(false);
         rightColumn.setSpacing(true);
@@ -502,7 +504,8 @@ public final class MyTask extends VerticalLayout {
         rightColumn.getStyle().set("padding", "var(--lumo-space-m)");
 
         H4 rightTitle = new H4("Planification & Dates");
-        rightTitle.addClassNames(LumoUtility.Margin.Bottom.SMALL, LumoUtility.TextColor.PRIMARY);
+        rightTitle.addClassNames(LumoUtility.Margin.Bottom.SMALL);
+        rightTitle.addClassNames("details_title");
         rightColumn.add(rightTitle);
 
         rightColumn.add(createStyledDetailRow("⏱️", "SLA (jours)",
@@ -519,7 +522,6 @@ public final class MyTask extends VerticalLayout {
 
         mainContent.add(leftColumn, rightColumn);
 
-        // Section des actions avec séparateur visuel
         Div separator = new Div();
         separator.addClassNames(LumoUtility.Background.CONTRAST_20);
         separator.getStyle()
@@ -527,7 +529,6 @@ public final class MyTask extends VerticalLayout {
                 .set("width", "100%")
                 .set("margin", "var(--lumo-space-l) 0");
 
-        // Boutons d'action avec icônes et styles améliorés
         Button deleteButton = new Button("Supprimer", VaadinIcon.TRASH.create());
         deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_PRIMARY);
         deleteButton.addClickListener(e -> {
@@ -625,14 +626,12 @@ public final class MyTask extends VerticalLayout {
         row.setSpacing(true);
         row.addClassNames(LumoUtility.Padding.Vertical.XSMALL);
 
-        // Icône
         Span iconSpan = new Span(icon);
         iconSpan.getStyle()
                 .set("font-size", "16px")
                 .set("width", "20px")
                 .set("text-align", "center");
 
-        // Label
         Span labelSpan = new Span(label);
         labelSpan.addClassNames(
                 LumoUtility.FontWeight.SEMIBOLD,
@@ -642,7 +641,6 @@ public final class MyTask extends VerticalLayout {
         labelSpan.setWidth("120px");
         labelSpan.getStyle().set("flex-shrink", "0");
 
-        // Valeur avec gestion du texte long
         Span valueSpan = new Span(value != null && !value.isEmpty() ? value : "Non renseigné");
         valueSpan.addClassNames(LumoUtility.FontSize.SMALL);
 
@@ -651,7 +649,6 @@ public final class MyTask extends VerticalLayout {
             valueSpan.getStyle().set("font-style", "italic");
         }
 
-        // Gestion du texte long pour la description
         if (label.equals("Description") && value != null && value.length() > 100) {
             valueSpan.setText(value.substring(0, 100) + "...");
             valueSpan.getElement().setAttribute("title", value); // Tooltip avec texte complet
@@ -766,6 +763,7 @@ public final class MyTask extends VerticalLayout {
 
         paysDestinataire.setPlaceholder("Sélectionner un pays");
         paysDestinataire.setRequired(true);
+        paysDestinataire.setReadOnly(true);
 
         dateLimite.setPlaceholder("jj/mm/aaaa");
         dateLimite.setLocale(Locale.FRANCE);
@@ -900,6 +898,7 @@ public final class MyTask extends VerticalLayout {
         }
 
         binder.setBean(task);
+        updateCountry();
         updateDueDate();
 
         formDialog.setHeaderTitle(task.getId() == null ? "Nouvelle tâche" : "Modifier la tâche : " + task.getLibelle());
@@ -983,11 +982,28 @@ public final class MyTask extends VerticalLayout {
             if (currentTask != null) currentTask.setDateLimite(null);
         }
     }
+    private void updateCountry() {
+        try {
+            if (currentTask == null || CurrentUsername == null) {
+                paysDestinataire.clear();
+                return;
+            }
+
+            String country = keycloakUserService.getCountryByUserName(CurrentUsername);
+
+            paysDestinataire.setValue(country);
+            currentTask.setPaysDestinataire(country);
+
+        } catch (Exception e) {
+            Notification.show("Erreur lors de la recuperation du pays du destinataire : " + e.getMessage())
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            paysDestinataire.clear();
+            if (currentTask != null) currentTask.setPaysDestinataire(null);
+        }
+    }
 
     private void updateList() {
-        try {
-            String CurrentUsername = devSecurityService.getCurrentUsername(); // Récupération de l'utilisateur connecté
-            List<Task> tasks = taskService.findAll()
+        try {List<Task> tasks = taskService.findAll()
                     .stream()
                     .filter(task -> CurrentUsername.equals(task.getResponsableUsername()))
                     .toList();

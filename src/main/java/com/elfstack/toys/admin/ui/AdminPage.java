@@ -8,6 +8,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
@@ -16,6 +17,7 @@ import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -43,14 +45,12 @@ public final class AdminPage extends Main {
     private List<Task> allTasks;
     private ListDataProvider<Task> overdueTasksProvider;
 
-    // Composants de filtrage
     private DatePicker startDateFilter;
     private DatePicker endDateFilter;
     private ComboBox<String> countryFilter;
     private ComboBox<StatutEnum> statusFilter;
     private TextField responsibleFilter;
 
-    // Composants d'affichage
     private VerticalLayout kpiCardsLayout;
     private VerticalLayout chartsLayout;
     private Grid<Task> overdueTasksGrid;
@@ -79,8 +79,6 @@ public final class AdminPage extends Main {
 
         kpiCardsLayout = new VerticalLayout();
         kpiCardsLayout.setSpacing(true);
-        kpiCardsLayout.setPadding(false);
-        kpiCardsLayout.addClassName(LumoUtility.Margin.MEDIUM);
         add(kpiCardsLayout);
 
         chartsLayout = createChartsSection();
@@ -90,8 +88,6 @@ public final class AdminPage extends Main {
     }
 
     private Component createFiltersSection() {
-        H3 filtersTitle = new H3("Filtres");
-        filtersTitle.addClassName(LumoUtility.Margin.Bottom.MEDIUM);
 
         startDateFilter = new DatePicker("Date de début");
         startDateFilter.setValue(LocalDate.now().minusMonths(1));
@@ -123,24 +119,25 @@ public final class AdminPage extends Main {
         resetFilters.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
         resetFilters.addClickListener(e -> resetFilters());
 
-        HorizontalLayout filterTopLayout = new HorizontalLayout(startDateFilter, endDateFilter, countryFilter);
-        filterTopLayout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.END);
-        filterTopLayout.addClassName(LumoUtility.Gap.MEDIUM);
-        HorizontalLayout filterBottomLayout = new HorizontalLayout(statusFilter, responsibleFilter, resetFilters);
-        filterBottomLayout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.END);
-        filterBottomLayout.addClassName(LumoUtility.Gap.MEDIUM);
-        HorizontalLayout filtersLayout = new HorizontalLayout(
-                filterTopLayout, filterBottomLayout
+        FlexLayout filtersLayout = new FlexLayout(startDateFilter, endDateFilter, countryFilter, statusFilter, responsibleFilter, resetFilters);
 
-        );
-        filtersLayout.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.END);
+        filtersLayout.setFlexWrap(FlexLayout.FlexWrap.WRAP);
+        filtersLayout.setJustifyContentMode(FlexLayout.JustifyContentMode.START);
+        filtersLayout.setAlignItems(FlexLayout.Alignment.END);
+
+        startDateFilter.setMinWidth("200px");
+        endDateFilter.setMinWidth("200px");
+        countryFilter.setMinWidth("150px");
+        statusFilter.setMinWidth("150px");
+        responsibleFilter.setMinWidth("200px");
+        resetFilters.setMinWidth("120px");
+
         filtersLayout.addClassName(LumoUtility.Gap.MEDIUM);
+        filtersLayout.addClassName(LumoUtility.Padding.MEDIUM);
+        filtersLayout.addClassName(LumoUtility.Background.CONTRAST_5);
+        filtersLayout.addClassName(LumoUtility.BorderRadius.MEDIUM);
 
-        VerticalLayout section = new VerticalLayout(filtersTitle, filtersLayout);
-        section.addClassName(LumoUtility.Padding.MEDIUM);
-        section.addClassName(LumoUtility.Background.CONTRAST_5);
-        section.addClassName(LumoUtility.BorderRadius.MEDIUM);
-        return section;
+        return filtersLayout;
     }
 
     private void resetFilters() {
@@ -200,6 +197,7 @@ public final class AdminPage extends Main {
         chartPlaceholder1.addClassName(LumoUtility.Background.CONTRAST_5);
         chartPlaceholder1.addClassName(LumoUtility.BorderRadius.MEDIUM);
         chartPlaceholder1.setHeight("300px");
+        chartPlaceholder1.setWidth("100%");
 
         Div chartPlaceholder2 = new Div();
         chartPlaceholder2.setText("Graphique par pays (À implémenter)");
@@ -207,6 +205,7 @@ public final class AdminPage extends Main {
         chartPlaceholder2.addClassName(LumoUtility.Background.CONTRAST_5);
         chartPlaceholder2.addClassName(LumoUtility.BorderRadius.MEDIUM);
         chartPlaceholder2.setHeight("300px");
+        chartPlaceholder2.setWidth("100%");
 
         HorizontalLayout chartsRow = new HorizontalLayout(chartPlaceholder1, chartPlaceholder2);
         chartsRow.setSizeFull();
@@ -331,43 +330,46 @@ public final class AdminPage extends Main {
     private void refreshDashboardWithTasks(List<Task> tasks) {
         kpiCardsLayout.removeAll();
 
-        // Calcul des statistiques
         TaskStatistics stats = calculateStatistics(tasks);
 
-        // Création des cartes KPI
         HorizontalLayout firstRow = new HorizontalLayout();
         firstRow.setWidthFull();
-        firstRow.addClassNames(LumoUtility.Margin.Bottom.LARGE);
+        firstRow.setSpacing(true);
+        firstRow.setMargin(true);
+        firstRow.getStyle().set("margin-bottom", "20px");
         firstRow.add(
                 createKpiCard("Nombre Total", String.valueOf(stats.totalTasks),
-                        VaadinIcon.TASKS.create(), "var(--lumo-primary-color)"),
+                        VaadinIcon.TASKS.create(), "#243163","#f8f9fa"),
                 createKpiCard("En Retard", String.valueOf(stats.overdueTasks),
-                        VaadinIcon.WARNING.create(), "var(--lumo-error-color)"),
+                        VaadinIcon.WARNING.create(), "#a51b1b","#ffebee"),
                 createKpiCard("Terminées", String.valueOf(stats.completedTasks),
-                        VaadinIcon.CHECK_CIRCLE.create(), "var(--lumo-success-color)"),
+                        VaadinIcon.CHECK_CIRCLE.create(), "#28a745","#e8f5e8"),
                 createKpiCard("SLA Moyen", stats.averageSlaRespected + "%",
-                        VaadinIcon.TIMER.create(), "var(--lumo-contrast-color)")
+                        VaadinIcon.TIMER.create(), "#243163","#e3f2fd")
         );
 
         HorizontalLayout secondRow = new HorizontalLayout();
         secondRow.setWidthFull();
+        secondRow.setSpacing(true);
+        secondRow.setMargin(true);
+        secondRow.getStyle().set("margin-bottom", "20px");
         secondRow.add(
                 createKpiCard("À Faire", String.valueOf(stats.todoTasks),
-                        VaadinIcon.CIRCLE.create(), "var(--lumo-contrast-color)"),
+                        VaadinIcon.CIRCLE.create(),"#243163","#f8f9fa"),
                 createKpiCard("En Cours", String.valueOf(stats.inProgressTasks),
-                        VaadinIcon.PLAY_CIRCLE.create(), "var(--lumo-primary-color)"),
+                        VaadinIcon.PLAY_CIRCLE.create(), "#28a745","#e8f5e8"),
                 createKpiCard("Annulées", String.valueOf(stats.cancelledTasks),
-                        VaadinIcon.CLOSE_CIRCLE.create(), "var(--lumo-error-color)"),
+                        VaadinIcon.CLOSE_CIRCLE.create(), "#a51b1b","#ffebee"),
                 createKpiCard("Pays Actifs", String.valueOf(stats.activeCountries),
-                        VaadinIcon.GLOBE.create(), "var(--lumo-contrast-color)")
+                        VaadinIcon.GLOBE.create(), "#243163","#e3f2fd")
         );
 
         kpiCardsLayout.add(firstRow, secondRow);
         kpiCardsLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
     }
 
-    private Component createKpiCard(String title, String value, Icon icon, String iconColor) {
-        Div card = new Div();
+    private Component createKpiCard(String title, String value, Icon icon, String iconColor, String backgroundColor) {
+        Card card = new Card();
         card.addClassName(LumoUtility.Background.BASE);
         card.addClassName(LumoUtility.BorderRadius.MEDIUM);
         card.addClassName(LumoUtility.Padding.MEDIUM);
@@ -378,26 +380,46 @@ public final class AdminPage extends Main {
         icon.setSize("24px");
 
         H2 valueText = new H2(value);
-        valueText.addClassName(LumoUtility.Margin.NONE);
-        valueText.addClassName(LumoUtility.TextColor.PRIMARY);
+        valueText.getStyle()
+                .set("color", iconColor)
+                .set("margin", "0")
+                .set("font-weight", "bold");;
 
         Span titleText = new Span(title);
-        titleText.addClassName(LumoUtility.TextColor.SECONDARY);
-        titleText.addClassName(LumoUtility.FontSize.SMALL);
+        titleText.getStyle()
+                .set("font-size", "14px")
+                .set("color", "#666")
+                .set("margin-bottom", "5px");
 
         HorizontalLayout header = new HorizontalLayout(icon, titleText);
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        header.setWidthFull();
 
         VerticalLayout content = new VerticalLayout(header, valueText);
         content.setSpacing(false);
         content.setPadding(false);
 
         card.add(content);
+        setupKpiCardStyle(card, backgroundColor);
         return card;
     }
+    private void setupKpiCardStyle(Card card, String backgroundColor) {
+        card.getStyle()
+                .set("background-color", backgroundColor)
+                .set("border", "1px solid rgba(0, 0, 0, 0.1)")
+                .set("border-radius", "12px")
+                .set("padding", "20px")
+                .set("min-height", "120px")
+                .set("width", "100%")
+                .set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
+                .set("transition", "box-shadow 0.3s ease");
 
+        card.getElement().addEventListener("mouseenter", e -> {
+            card.getStyle().set("box-shadow", "0 4px 8px rgba(0,0,0,0.15)");
+        });
+
+        card.getElement().addEventListener("mouseleave", e -> {
+            card.getStyle().set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)");
+        });
+    }
     private TaskStatistics calculateStatistics(List<Task> tasks) {
         TaskStatistics stats = new TaskStatistics();
         stats.totalTasks = tasks.size();
@@ -415,7 +437,6 @@ public final class AdminPage extends Main {
                 .distinct()
                 .count();
 
-        // Calcul SLA moyen (simplifié)
         long completedWithSla = tasks.stream()
                 .filter(t -> t.getStatut() == StatutEnum.TERMINER && t.getSlaDays() != null)
                 .count();

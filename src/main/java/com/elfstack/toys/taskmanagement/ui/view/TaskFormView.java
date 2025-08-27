@@ -135,7 +135,9 @@ public class TaskFormView extends VerticalLayout {
         searchField.setValueChangeMode(ValueChangeMode.EAGER);
         setupColumnVisibility();
         configureGrid();
-        H3 title = new H3("Liste des Tâches");
+        H1 title = new H1("Liste des Tâches");
+        title.addClassNames(LumoUtility.Margin.Bottom.LARGE);
+        title.getStyle().setColor("#243163");
         HorizontalLayout header = new HorizontalLayout(title);
         HorizontalLayout toolbarLayout = new HorizontalLayout(searchField, addTaskButton, button);
         toolbarLayout.setAlignItems(HorizontalLayout.Alignment.END);
@@ -334,18 +336,6 @@ public class TaskFormView extends VerticalLayout {
                 .setResizable(true)
                 .setWidth("100px")
                 .setFlexGrow(0);
-        ComboBox<String> paysField = new ComboBox<>();
-        try {
-            List<String> countries = holidaySyncService.getAllCountries();
-            paysField.setItems(countries);
-        } catch (Exception e) {
-            paysField.setItems("FR", "UK", "US", "DE", "ES", "IT");
-        }
-        paysField.setWidthFull();
-        gridBinder.forField(paysField)
-                .asRequired("Le pays ne peut pas être vide")
-                .bind(Task::getPaysDestinataire, Task::setPaysDestinataire);
-        paysColumn.setEditorComponent(paysField);
 
 
         Grid.Column<Task> priorityColumn = grid.addColumn(new ComponentRenderer<>(task -> {
@@ -484,7 +474,7 @@ public class TaskFormView extends VerticalLayout {
 
         H2 title = new H2("Détails de la tâche");
         title.addClassNames(LumoUtility.Margin.NONE, LumoUtility.FontSize.XLARGE);
-        title.getStyle().set("color", "var(--lumo-primary-color)");
+        title.getStyle().set("color", "#243163");
         Span statusBadge = createStatusBadge(task.getStatut());
 
         header.add(title, statusBadge);
@@ -501,7 +491,8 @@ public class TaskFormView extends VerticalLayout {
         leftColumn.getStyle().set("padding", "var(--lumo-space-m)");
 
         H4 leftTitle = new H4("Informations générales");
-        leftTitle.addClassNames(LumoUtility.Margin.Bottom.SMALL, LumoUtility.TextColor.PRIMARY);
+        leftTitle.addClassNames(LumoUtility.Margin.Bottom.SMALL);
+        leftTitle.addClassNames("details_title");
         leftColumn.add(leftTitle);
 
         leftColumn.add(createStyledDetailRow("📋", "Libellé", task.getLibelle()));
@@ -519,7 +510,8 @@ public class TaskFormView extends VerticalLayout {
         rightColumn.getStyle().set("padding", "var(--lumo-space-m)");
 
         H4 rightTitle = new H4("Planification & Dates");
-        rightTitle.addClassNames(LumoUtility.Margin.Bottom.SMALL, LumoUtility.TextColor.PRIMARY);
+        rightTitle.addClassNames(LumoUtility.Margin.Bottom.SMALL);
+        rightTitle.addClassNames("details_title");
         rightColumn.add(rightTitle);
 
         rightColumn.add(createStyledDetailRow("⏱️", "SLA (jours)",
@@ -610,24 +602,6 @@ public class TaskFormView extends VerticalLayout {
                 LumoUtility.FontSize.SMALL,
                 LumoUtility.FontWeight.SEMIBOLD
         );
-
-        String statusName = status.toString().toUpperCase();
-        switch (statusName) {
-            case "COMPLETED":
-            case "DONE":
-                badge.addClassNames(LumoUtility.Background.SUCCESS_10, LumoUtility.TextColor.SUCCESS);
-                break;
-            case "IN_PROGRESS":
-            case "PENDING":
-                badge.addClassNames(LumoUtility.Background.PRIMARY_10, LumoUtility.TextColor.PRIMARY);
-                break;
-            case "CANCELLED":
-            case "FAILED":
-                badge.addClassNames(LumoUtility.Background.ERROR_10, LumoUtility.TextColor.ERROR);
-                break;
-            default:
-                badge.addClassNames(LumoUtility.Background.CONTRAST_10, LumoUtility.TextColor.SECONDARY);
-        }
 
         return badge;
     }
@@ -778,6 +752,7 @@ public class TaskFormView extends VerticalLayout {
 
         paysDestinataire.setPlaceholder("Sélectionner un pays");
         paysDestinataire.setRequired(true);
+        paysDestinataire.setReadOnly(true);
 
         dateLimite.setPlaceholder("jj/mm/aaaa");
         dateLimite.setLocale(Locale.FRANCE);
@@ -791,6 +766,9 @@ public class TaskFormView extends VerticalLayout {
 
         responsableUsername.setPlaceholder("Sélectionner un responsable");
         responsableUsername.setRequired(true);
+        responsableUsername.addValueChangeListener(e -> {
+            updateCountry();
+        });
 
         paysDestinataire.addValueChangeListener(e -> updateDueDate());
         slaDays.addValueChangeListener(e -> updateDueDate());
@@ -929,6 +907,7 @@ public class TaskFormView extends VerticalLayout {
         }
 
         binder.setBean(task);
+        updateCountry();
         updateDueDate();
 
         formDialog.setHeaderTitle(task.getId() == null ? "Nouvelle tâche" : "Modifier la tâche : " + task.getLibelle());
@@ -1004,6 +983,26 @@ public class TaskFormView extends VerticalLayout {
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
             dateLimite.clear();
             if (currentTask != null) currentTask.setDateLimite(null);
+        }
+    }
+
+    private void updateCountry() {
+        try {
+            if (currentTask == null || responsableUsername.getValue() == null) {
+                paysDestinataire.clear();
+                return;
+            }
+
+            String country = keycloakUserService.getCountryByUserName(responsableUsername.getValue());
+
+            paysDestinataire.setValue(country);
+            currentTask.setPaysDestinataire(country);
+
+        } catch (Exception e) {
+            Notification.show("Erreur lors de la recuperation du pays du destinataire : " + e.getMessage())
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            paysDestinataire.clear();
+            if (currentTask != null) currentTask.setPaysDestinataire(null);
         }
     }
     private void updateList() {

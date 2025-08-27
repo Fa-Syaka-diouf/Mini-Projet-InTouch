@@ -172,7 +172,7 @@
                 })
                 .catch(error => {
                   console.error('Error:', error);
-                  alert('Erreur de connexion. L\'API de réinitialisation n\'est peut-être pas accessible depuis cette page.');
+                  alert('Erreur de connexion.');
 
                 })
                 .finally(() => {

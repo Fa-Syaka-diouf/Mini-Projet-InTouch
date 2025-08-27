@@ -9,10 +9,11 @@ import org.springframework.context.annotation.Bean;
 import java.time.Clock;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.client.RestTemplate;
 
 
-
+@EnableAsync
 @SpringBootApplication
 @Theme("default")
 public class Application implements AppShellConfigurator {
@@ -23,7 +24,7 @@ public class Application implements AppShellConfigurator {
     }
 
     @Configuration
-    public class AppConfig {
+    public static class AppConfig {
 
         @Bean
         public RestTemplate restTemplate() {

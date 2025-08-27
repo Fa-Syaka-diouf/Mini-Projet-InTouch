@@ -1,5 +1,7 @@
 package com.elfstack.toys.taskmanagement.service;
 
+import com.elfstack.toys.admin.service.CalendarService;
+import com.elfstack.toys.admin.service.HolidaySyncService;
 import com.elfstack.toys.taskmanagement.domain.StatutEnum;
 import com.elfstack.toys.taskmanagement.domain.Task;
 import com.elfstack.toys.taskmanagement.domain.TaskPriority;
@@ -24,10 +26,14 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final Clock clock;
     private final KeycloakUserService keycloakUserService;
+    private final HolidaySyncService holidaySyncService;
+    private final CalendarService calendarService;
 
-    TaskService(TaskRepository taskRepository, Clock clock, KeycloakUserService keycloakUserService) {
+    TaskService(TaskRepository taskRepository, Clock clock, KeycloakUserService keycloakUserService,HolidaySyncService holidaySyncService,CalendarService calendarService) {
         this.taskRepository = taskRepository;
         this.clock = clock;
+        this.holidaySyncService = holidaySyncService;
+        this.calendarService = calendarService;
         this.keycloakUserService = keycloakUserService;
     }
 
@@ -80,9 +86,20 @@ public class TaskService {
         if (existingTask.isEmpty()) {
             throw new IllegalArgumentException("Tâche introuvable avec l'ID : " + task.getId());
         }
-
-        // Conserver la date de création originale
         task.setCreationDate(existingTask.get().getCreationDate());
+        LocalDate startDate = task.getCreationDate()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+        String countryCode = holidaySyncService.countryCodeSetup(task.getPaysDestinataire());
+        LocalDate computedDueDate = calendarService.calculateDueDate(
+                startDate,
+                Math.toIntExact(task.getSlaDays()),
+                countryCode
+        );
+
+        task.setDateLimite(computedDueDate);
+        // Conserver la date de création originale
+
 
         return taskRepository.saveAndFlush(task);
     }
@@ -111,8 +128,8 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public List<Task> findByResponsableFullname(String fullname) {
-        return taskRepository.findByResponsableFullname(fullname);
+    public List<Task> getTasksByResponsable(String ResponsableUsername) {
+        return taskRepository.findByResponsableUsername(ResponsableUsername);
     }
 
     @Transactional(readOnly = true)
@@ -130,7 +147,7 @@ public class TaskService {
         return taskRepository.findNextTasks(today, endOfWeek, topFive);
     }
     @Transactional(readOnly = true)
-    public List<Task> findByStatut(StatutEnum statut) {
+    public List<Task> getByStatut(StatutEnum statut) {
         return taskRepository.findByStatut(statut);
     }
 
