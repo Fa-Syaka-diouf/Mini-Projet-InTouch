@@ -27,44 +27,21 @@ import java.util.List;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
-//
-//    // Recherche par titre
-//    List<Task> findByTitleContainingIgnoreCase(String title);
-//
-//    // Recherche par pays
-//    List<Task> findByCountry(String country);
-//
-//    // Recherche par statut
-//    List<Task> findByStatus(TaskStatus status);
-//
-//    // Vérifier l'unicité du titre
-//    boolean existsByTitleIgnoreCase(String title);
-//
-//    // Tâches par priorité
-//    @Query("SELECT t FROM Task t WHERE t.priority = :priority ORDER BY t.createdDate DESC")
-//    List<Task> findByPriorityOrderByCreatedDateDesc(TaskPriority priority);
-//
-//    // Tâches en retard
-//    @Query("SELECT t FROM Task t WHERE t.dueDate < CURRENT_DATE AND t.status != :status")
-//    List<Task> findOverdueTasks(TaskStatus status);
-
-//    ManagedTypes findAllBy(Pageable pageable);
-
-//    @Override
     Page<Task> findAllBy(Pageable pageable);
 
     List<Task> findByStatut(StatutEnum statut);
 
-    List<Task> findByResponsableFullname(String fullname);
+    List<Task> findByResponsableUsername(String responsableUsername);
 
     List<Task> findByPriority(TaskPriority priority);
 
-    @Query("SELECT t FROM Task t WHERE t.dateLimite < CURRENT_DATE")
+    @Query("SELECT t FROM Task t " +
+            "WHERE (t.dateFin IS NOT NULL AND t.dateFin > t.dateLimite) " +
+            "OR (t.dateFin IS NULL AND t.dateLimite < CURRENT_DATE)")
     List<Task> findTasksEnRetard(Pageable pageable);
 
     @Query("SELECT t FROM Task t " +
             "WHERE t.dateLimite BETWEEN :today AND :endOfWeek " +
-            "AND t.statut = 'A_FAIRE' " +
             "ORDER BY t.dateLimite ASC")
     List<Task> findNextTasks(@Param("today") LocalDate today,
                              @Param("endOfWeek") LocalDate endOfWeek,

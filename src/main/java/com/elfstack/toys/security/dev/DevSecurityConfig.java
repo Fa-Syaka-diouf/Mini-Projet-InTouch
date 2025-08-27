@@ -17,17 +17,21 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,15 +54,15 @@ class DevSecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/api/reset-otp") // Désactiver CSRF pour cette API
+                        .ignoringRequestMatchers("/api/reset-otp")
+                        .ignoringRequestMatchers("/api/**", "/VAADIN/**")
                 )
-                // Configuration OAuth2/OIDC
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
                                 .oidcUserService(this.oidcUserService())
                         )
-                        .defaultSuccessUrl("/", true)
-                        .failureUrl("/?error=true")
+                        .defaultSuccessUrl("/", false)
+                        .failureHandler(this.oAuth2AuthenticationFailureHandler())
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
@@ -69,6 +73,7 @@ class DevSecurityConfig {
                         .requestMatchers("/api/reset-otp").permitAll()
                         .requestMatchers("/api/confirm-reset-otp").permitAll()
                         .requestMatchers("/VAADIN/**").permitAll()
+                        .requestMatchers("/VAADIN/**", "/themes/**", "/images/**").permitAll()
                         .requestMatchers("/images/**").permitAll()
 
                         .requestMatchers("/task-list/**").hasAnyRole("ADMIN", "USER")
@@ -94,6 +99,50 @@ class DevSecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);
         return source;
+    }
+    @Bean
+    public AuthenticationFailureHandler oAuth2AuthenticationFailureHandler() {
+        return (request, response, exception) -> {
+            log.error("=== OAUTH2 AUTHENTICATION FAILURE ===");
+            log.error("Request URI: {}", request.getRequestURI());
+            log.error("Request URL: {}", request.getRequestURL());
+            log.error("Query String: {}", request.getQueryString());
+            log.error("Remote Address: {}", request.getRemoteAddr());
+            log.error("Session ID: {}", request.getSession().getId());
+
+            // Headers
+            log.error("=== REQUEST HEADERS ===");
+            Collections.list(request.getHeaderNames()).forEach(headerName -> {
+                log.error("{}: {}", headerName, request.getHeader(headerName));
+            });
+
+            // Parameters
+            log.error("=== REQUEST PARAMETERS ===");
+            request.getParameterMap().forEach((key, values) -> {
+                log.error("{}: {}", key, Arrays.toString(values));
+            });
+
+            // Exception details
+            log.error("Exception Type: {}", exception.getClass().getSimpleName());
+            log.error("Exception Message: {}", exception.getMessage());
+            log.error("Exception Cause: {}", exception.getCause() != null ? exception.getCause().getMessage() : "null");
+
+            // Stack trace complète
+            log.error("Full Stack Trace:", exception);
+
+            // Si c'est une OAuth2AuthenticationException, extraire plus de détails
+            if (exception instanceof OAuth2AuthenticationException oauth2Exception) {
+                log.error("OAuth2 Error Code: {}", oauth2Exception.getError().getErrorCode());
+                log.error("OAuth2 Error Description: {}", oauth2Exception.getError().getDescription());
+                log.error("OAuth2 Error URI: {}", oauth2Exception.getError().getUri());
+            }
+
+            // Redirection avec détails d'erreur encodés
+            String errorMessage = URLEncoder.encode(exception.getMessage(), StandardCharsets.UTF_8);
+            String errorType = exception.getClass().getSimpleName();
+
+            response.sendRedirect("/?error=oauth_failed&type=" + errorType + "&message=" + errorMessage);
+        };
     }
     /**
      * Service personnalisé pour extraire les rôles depuis Keycloak

@@ -20,8 +20,14 @@ vaadin-side-nav-item:hover {
     --_lumo-button-text-color: #243163;
     --lumo-primary-text-color: #a51b1b;
 }
+.details_title{
+    --lumo-primary-text-color: #243163;
+}
 .save-button-custom{
     --_lumo-button-text-color: white;
+}
+.create-bouton{
+    --_lumo-button-primary-background: #243163;
 }
 .badge-high { background-color: #e17055; color: white; }
 

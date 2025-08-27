@@ -1,6 +1,5 @@
 package com.elfstack.toys.security.resetOtp;
-
-import jakarta.mail.internet.MimeMessage;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -13,12 +12,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -45,13 +39,17 @@ public class DevResetOtp {
     @Value("${app.frontend.url:http://localhost:8080}")
     private String frontendUrl;
 
-    @Autowired
-    private JavaMailSender mailSender;
-
+    private final EmailService emailService;
     private final Map<String, ResetToken> resetTokens = new ConcurrentHashMap<>();
 
+    public DevResetOtp(EmailService emailService) {
+        this.emailService = emailService;
+    }
+
     private static class ResetToken {
+        @Getter
         private final String userId;
+        @Getter
         private final String username;
         private final String email;
         private final LocalDateTime expiryTime;
@@ -66,10 +64,7 @@ public class DevResetOtp {
         public boolean isExpired() {
             return LocalDateTime.now().isAfter(expiryTime);
         }
-        public String getUserId() { return userId; }
-        public String getUsername() { return username; }
-        public String getEmail() { return email; }
-        public LocalDateTime getExpiryTime() { return expiryTime; }
+
     }
 
     @PostMapping("/reset-otp")
@@ -123,7 +118,7 @@ public class DevResetOtp {
 
             String resetToken = generateResetToken();
             resetTokens.put(resetToken, new ResetToken(userId, username, email));
-            sendResetEmail(email, username, resetToken);
+            emailService.sendResetEmail(email, username, resetToken);
 
             log.info("Email de réinitialisation OTP envoyé pour l'utilisateur: {}, Email: {}", username, email);
 
@@ -173,14 +168,12 @@ public class DevResetOtp {
                 log.info("Suppression de l'OTP avec ID: {}", cred.getId());
                 userResource.removeCredential(cred.getId());
             }
-
-            // Ajout de la Required Action
             UserRepresentation user = userResource.toRepresentation();
             if (user.getRequiredActions() == null) {
                 user.setRequiredActions(new ArrayList<>());
             }
 
-            user.getRequiredActions().clear(); // Nettoyer les autres actions
+            user.getRequiredActions().clear();
             user.getRequiredActions().add("CONFIGURE_TOTP");
             userResource.update(user);
 
@@ -189,7 +182,7 @@ public class DevResetOtp {
             // URL de redirection vers Keycloak
             String keycloakLoginUrl = keycloakServerUrl + "/realms/" + realm +
                     "/protocol/openid-connect/auth" +
-                    "?client_id=task-management-app" +  // Remplacez par votre vrai client-id
+                    "?client_id=task-management-app" +
                     "&response_type=code" +
                     "&scope=openid%20profile%20email" +
                     "&redirect_uri=" + java.net.URLEncoder.encode(frontendUrl + "/login/oauth2/code/keycloak", "UTF-8") +
@@ -204,9 +197,9 @@ public class DevResetOtp {
                     .build();
 
         } catch (Exception e) {
-            log.error("Erreur lors de la confirmation de réinitialisation OTP", e);
+            log.error("Erreur lors de la confirmation de rnitialisation OTP", e);
             return ResponseEntity.status(500)
-                    .body(Map.of("success", false, "message", "Erreur interne du serveur"));
+                    .body(Map.of("success", false, "message", "Erreur du serveur"));
         }
     }
 
@@ -217,40 +210,6 @@ public class DevResetOtp {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    private void sendResetEmail(String email, String username, String resetToken) {
-        try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-            helper.setTo(email);
-            helper.setSubject("Réinitialisation de votre OTP - InTouchTask");
-
-            // CORRECTION MAJEURE : URL vers l'endpoint API correct
-            String confirmationUrl = frontendUrl + "/api/confirm-reset-otp?token=" + resetToken;
-
-            String emailContent = "<html>" +
-                    "<body>" +
-                    "<p>Bonjour <b>" + username + "</b>,</p>" +
-                    "<p>Vous avez demandé la réinitialisation de votre authentification à deux facteurs (OTP).</p>" +
-                    "<p>Cliquez sur le lien suivant pour confirmer la réinitialisation :</p>" +
-                    "<p><a href='" + confirmationUrl + "'>Réinitialiser mon OTP</a></p>" +
-                    "<p>Ce lien expire dans 1 heure.</p>" +
-                    "<p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>" +
-                    "<br>" +
-                    "<p>Cordialement,<br>L'équipe InTouchTask</p>" +
-                    "</body>" +
-                    "</html>";
-
-            helper.setText(emailContent, true);
-            mailSender.send(mimeMessage);
-
-            log.info("Email de réinitialisation OTP envoyé à {} avec URL: {}", email, confirmationUrl);
-
-        } catch (Exception e) {
-            log.error("Erreur lors de l'envoi de l'email à {}", email, e);
-            throw new RuntimeException("Impossible d'envoyer l'email", e);
-        }
-    }
 
     private Keycloak getKeycloakInstance() {
         return KeycloakBuilder.builder()

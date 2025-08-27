@@ -1,5 +1,6 @@
 package com.elfstack.toys.usermanagement.service;
 
+import com.elfstack.toys.admin.service.CountryCalendarConfig;
 import com.elfstack.toys.usermanagement.domain.KeycloakUserDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -23,14 +25,16 @@ public class KeycloakUserService {
 
     private final RestTemplate restTemplate;
     private final KeycloakAuthService authService;
+    private final CountryCalendarConfig countryCalendarConfig;
     private final String baseUrl;
     private final String realm;
 
     public KeycloakUserService(RestTemplate restTemplate,
-                               KeycloakAuthService authService,
+                               KeycloakAuthService authService,CountryCalendarConfig countryCalendarConfig,
                                @Value("${keycloak.server-url:http://localhost:8081}") String baseUrl,
                                @Value("${keycloak.realm:task-management}") String realm) {
         this.restTemplate = restTemplate;
+        this.countryCalendarConfig = countryCalendarConfig;
         this.authService = authService;
         this.baseUrl = baseUrl;
         this.realm = realm;
@@ -74,7 +78,6 @@ public class KeycloakUserService {
             log.warn("Token expiré, tentative de renouvellement");
             authService.invalidateToken();
 
-            // Retry une seule fois avec un nouveau token
             try {
                 String url = buildUsersUrl(first, max);
                 HttpHeaders headers = createAuthenticatedHeaders();
@@ -148,6 +151,44 @@ public class KeycloakUserService {
             return null;
         }
     }
+    public String getCountryByUserName(String username) {
+        if (username == null || username.trim().isEmpty()) {
+            log.warn("Le username fourni est vide ou null");
+            return null;
+        }
+
+        try {
+            List<KeycloakUserDto> users = getAllUsers();
+            Optional<KeycloakUserDto> user = users.stream()
+                    .filter(u -> u.getUsername() != null && u.getUsername().equalsIgnoreCase(username.trim()))
+                    .findFirst();
+
+            if (user.isPresent()) {
+                Map<String, List<String>> attributes = user.get().getAttributes();
+                if (attributes != null && attributes.containsKey("country")) {
+                    List<String> countryValues = attributes.get("country");
+                    if (countryValues != null && !countryValues.isEmpty()) {
+                        String countryCode = countryValues.get(0);
+                        log.info("Code Pays trouvé pour l'utilisateur {} : {}", username, countryCode);
+                        return countryCalendarConfig.getCountryNameByIsoCode(countryCode.toLowerCase());
+                    } else {
+                        log.warn("L'attribut 'country' existe mais est vide pour l'utilisateur : {}", username);
+                        return null;
+                    }
+                } else {
+                    log.warn("L'attribut 'country' n'existe pas pour l'utilisateur : {}", username);
+                    return null;
+                }
+            } else {
+                log.warn("Aucun utilisateur trouvé avec le username : {}", username);
+                return null;
+            }
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération du pays pour l'utilisateur : {}", username, e);
+            return null;
+        }
+    }
     public String getFullNameByUserName(String username) {
         if (username == null || username.trim().isEmpty()) {
             log.warn("Le fullName fourni est vide ou null");
@@ -186,35 +227,6 @@ public class KeycloakUserService {
         }
     }
 
-    public KeycloakUserDto getUserByUsername(String username) {
-        if (username == null || username.trim().isEmpty()) {
-            return null;
-        }
-
-        try {
-            String url = buildUsersUrl(0, 1) + "&username=" + username.trim();
-            HttpHeaders headers = createAuthenticatedHeaders();
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<List<KeycloakUserDto>> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    entity,
-                    new ParameterizedTypeReference<List<KeycloakUserDto>>() {}
-            );
-
-            List<KeycloakUserDto> users = response.getBody();
-            if (users != null && !users.isEmpty()) {
-                return users.get(0);
-            }
-
-            return null;
-
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération de l'utilisateur: {}", username, e);
-            return null;
-        }
-    }
 
     private String buildUsersUrl(int first, int max) {
         return String.format("%s/admin/realms/%s/users?first=%d&max=%d",
@@ -228,18 +240,5 @@ public class KeycloakUserService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("User-Agent", "TaskManagement-App/1.0");
         return headers;
-    }
-
-    /**
-     * Test de connectivité avec Keycloak
-     */
-    public boolean testConnection() {
-        try {
-            getAllUsers(0, 1);
-            return true;
-        } catch (Exception e) {
-            log.error("Test de connexion Keycloak échoué", e);
-            return false;
-        }
     }
 }

@@ -1,11 +1,25 @@
 server:
   port: ${PORT:8080}
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        secure: false  # Pour le développement local
+        http-only: true
 
 logging:
   level:
     org.atmosphere: warn
     org.springframework.security: DEBUG
     org.springframework.security.oauth2: DEBUG
+    org.springframework.web.client.RestTemplate: DEBUG
+    org.springframework.security.web.authentication: DEBUG
+    org.springframework.security.oauth2.client: DEBUG
+    org.springframework.security.web: DEBUG
+    org.springframework.security.oauth2.client.web: DEBUG
+    org.springframework.security.oauth2.client.registration: DEBUG
+    org.springframework.security.oauth2.client.oidc: DEBUG
+    com.elfstack.toys.security: DEBUG
 
 vaadin:
   launch-browser: true
@@ -47,22 +61,18 @@ spring:
       client:
         registration:
           keycloak:
-            client-id: ${KEYCLOAK_CLIENT_ID}
-            client-secret: ${KEYCLOAK_CLIENT_SECRET}
+            client-id: task-management-app
+            client-secret: kAZEIszScubcPyeiXzBYZKOBIZMBqkxz
             scope: openid,profile,email
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: "http://localhost:8080/login/oauth2/code/keycloak"
         provider:
           keycloak:
-            issuer-uri: ${ISSUER_URI}
-            authorization-uri: ${AUTH_URI}
-            token-uri: ${TOKEN_URI}
-            user-info-uri: ${USERINFO_URI}
-            jwk-set-uri: ${JWK_URI}
+            issuer-uri: http://localhost:8081/realms/task-management
             user-name-attribute: preferred_username
-      resource server:
-        jwt:
-          issuer-uri: ${ISSUER_URI}
+  session:
+    store-type: none  # Utilise la session en mémoire
+    timeout: 30m
 
 # Configuration Keycloak
 keycloak:
